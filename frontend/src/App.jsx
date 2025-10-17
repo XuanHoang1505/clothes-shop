@@ -1,12 +1,11 @@
-import AppHeader from '@components/site/AppHeader'
-import ProductDetailsPage from '@/pages/site/ProductDetailsPage'
-import Cart from './pages/site/Cart'
-
+import Home from '@pages/site/home/Home'
 function App() {
 
 
   return (
-    <ProductDetailsPage />
+    <>
+      <Home />
+    </>
   )
 }
 
