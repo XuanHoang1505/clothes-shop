@@ -1,12 +1,10 @@
-import AppHeader from '@components/site/AppHeader'
-import './App.css'
-
+import Home from '@pages/site/home/Home'
 function App() {
  
 
   return (
     <>
-      
+      <Home />
     </>
   )
 }

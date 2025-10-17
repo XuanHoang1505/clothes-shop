@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 // Axios có interceptor (dùng cho toàn site)
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5271/api/",
+  baseURL: "http://127.0.0.1:8000/api/",
 });
 
 let isRefreshing = false;
