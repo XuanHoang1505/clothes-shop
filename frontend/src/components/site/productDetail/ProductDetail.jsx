@@ -1,136 +1,212 @@
-import { useState } from 'react';
-import { Minus, Plus, Check } from 'lucide-react';
-import { Image } from "antd";
+import { useState, useEffect } from 'react';
+import { Minus, Plus, ShoppingCart, Heart, Star, Truck, Shield, RefreshCw } from 'lucide-react';
 
 function ProductDetail() {
-    const [selectedColor, setSelectedColor] = useState('olive');
-    const [selectedSize, setSelectedSize] = useState('Large');
-    const [quantity, setQuantity] = useState(1);
-    const [selectedImage, setSelectedImage] = useState(0);
-
-
-    const colors = [
-        { name: 'olive', class: 'bg-yellow-700' },
-        { name: 'teal', class: 'bg-teal-700' },
-        { name: 'navy', class: 'bg-blue-900' }
-    ];
-
-    const sizes = ['Small', 'Medium', 'Large', 'X-Large'];
-
-    const images = [
-        'https://sneakerdaily.vn/wp-content/uploads/2025/05/Ao-Travis-Scott-x-Nike-x-FC-Barcelona-Retro-2000_01-Home-Skeleton-Jersey.jpg',
-        'https://sneakerdaily.vn/wp-content/uploads/2025/05/Ao-Travis-Scott-x-Nike-x-FC-Barcelona-Retro-2000_01-Home-Skeleton-Jersey-6.jpg',
-        'https://www.retrosoccer.co.uk/cdn/shop/files/5bc5da6b_1080x.jpg?v=1751353906'
-    ];
-
-    const handleQuantityChange = (type) => {
-        if (type === 'increment') {
-            setQuantity(prev => prev + 1);
-        } else if (type === 'decrement' && quantity > 1) {
-            setQuantity(prev => prev - 1);
-        }
+    const mockProduct = {
+        data: {
+            id: 'P001',
+            name: 'Áo Thun Basic Cotton Nam',
+            brand: { name: 'CoolMate', logo: 'https://via.placeholder.com/100x40?text=CoolMate' },
+            category: { parent: 'Thời trang nam', name: 'Áo thun' },
+            price: 199000,
+            formatted_price: '199.000đ',
+            compare_price: 259000,
+            formatted_compare_price: '259.000đ',
+            stock: 15,
+            in_stock: true,
+            on_sale: true,
+            discount_percentage: 20,
+            is_new: true,
+            is_bestseller: true,
+            is_featured: false,
+            description:
+                'Áo thun cotton 100% thoáng mát, mềm mại, form dáng vừa vặn. Phù hợp cho mọi hoạt động hằng ngày.',
+            material: '100% Cotton',
+            weight: 250,
+            care_instructions: 'Giặt ở 30°C, không tẩy, không sấy khô trực tiếp.',
+            available_colors: [
+                { name: 'Trắng', code: '#FFFFFF' },
+                { name: 'Đen', code: '#000000' },
+                { name: 'Xanh navy', code: '#001F3F' },
+            ],
+            available_sizes: ['S', 'M', 'L', 'XL'],
+            images: [
+                { url: 'https://via.placeholder.com/600x600?text=Ao+Thun+1', alt: 'Ảnh 1' },
+                { url: 'https://via.placeholder.com/600x600?text=Ao+Thun+2', alt: 'Ảnh 2' },
+                { url: 'https://via.placeholder.com/600x600?text=Ao+Thun+3', alt: 'Ảnh 3' },
+            ],
+            stats: { rating_average: 4.6, review_count: 123, sold_count: 250 },
+            variants: [
+                { color: 'Trắng', size: 'M', sku: 'ATWHTM', stock: 5 },
+                { color: 'Đen', size: 'L', sku: 'ATBLKL', stock: 8 },
+                { color: 'Xanh navy', size: 'XL', sku: 'ATNAVXL', stock: 2 },
+            ],
+            tags: ['Áo thun', 'Cotton', 'Thời trang nam'],
+            sku: 'AT001',
+        },
     };
 
+    const [product, setProduct] = useState(mockProduct);
+    const [selectedColor, setSelectedColor] = useState(mockProduct.data.available_colors[0].name);
+    const [selectedSize, setSelectedSize] = useState(mockProduct.data.available_sizes[0]);
+    const [quantity, setQuantity] = useState(1);
+    const [selectedImage, setSelectedImage] = useState(0);
+    const [selectedVariant, setSelectedVariant] = useState(mockProduct.data.variants[0]);
+
+    useEffect(() => {
+        const variant = mockProduct.data.variants.find(
+            v => v.color === selectedColor && v.size === selectedSize
+        );
+        setSelectedVariant(variant);
+    }, [selectedColor, selectedSize]);
+
+    const handleQuantityChange = (type) => {
+        const maxStock = selectedVariant?.stock || product.data.stock;
+        if (type === 'increment' && quantity < maxStock) setQuantity(prev => prev + 1);
+        else if (type === 'decrement' && quantity > 1) setQuantity(prev => prev - 1);
+    };
+
+    const handleAddToCart = () => {
+        alert(`Đã thêm ${quantity} sản phẩm "${product.data.name}" vào giỏ hàng!`);
+    };
+
+    const { data } = product;
+    const images = data.images.map(img => img.url);
+    const currentStock = selectedVariant?.stock || data.stock;
+
     return (
-        <div className="min-h-screen bg-white p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left Column - Images */}
-                    <div className="flex gap-4">
-                        {/* Thumbnail Column */}
-                        <div className="flex flex-col gap-3">
+        <div className="min-h-screen bg-gray-50">
+            {/* Breadcrumb */}
+            <div className="bg-white border-b">
+                <div className="max-w-7xl mx-auto px-4 py-3 text-sm text-gray-600 flex flex-wrap gap-1">
+                    <span>Trang chủ</span>
+                    <span>/</span>
+                    <span>{data.category.parent}</span>
+                    <span>/</span>
+                    <span>{data.category.name}</span>
+                    <span>/</span>
+                    <span className="text-black font-medium">{data.name}</span>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                    {/* Left - Images */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        {/* Thumbnails */}
+                        <div className="flex sm:flex-col gap-3 sm:w-24 w-full justify-center sm:justify-start">
                             {images.map((img, idx) => (
                                 <button
                                     key={idx}
                                     onClick={() => setSelectedImage(idx)}
-                                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx ? 'border-black' : 'border-gray-200'
+                                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === idx
+                                        ? 'border-black shadow-md'
+                                        : 'border-gray-200 hover:border-gray-400'
                                         }`}
                                 >
-                                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                        <img src={img} alt={`Thumbnail ${idx + 1}`} className="object-cover w-full h-full" />
-                                    </div>
+                                    <img src={img} alt={`Ảnh ${idx + 1}`} className="object-cover w-full h-full" />
                                 </button>
                             ))}
                         </div>
 
-                        {/* Main Image */}
-                        <div className="flex-1 bg-gray-100 rounded-2xl overflow-hidden aspect-square flex items-center justify-center">
-                            <div className="h-full w-full">
+                        {/* Main image */}
+                        <div className="flex-1 bg-white rounded-2xl overflow-hidden shadow-lg">
+                            <div className="relative aspect-square">
                                 <img
                                     src={images[selectedImage]}
-                                    alt={`Product Image ${selectedImage + 1}`}
+                                    alt="Product Image"
                                     className="w-full h-full object-cover"
                                 />
+                                {data.on_sale && (
+                                    <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1.5 rounded-full font-bold text-xs sm:text-sm">
+                                        -{data.discount_percentage}%
+                                    </div>
+                                )}
+                                {data.is_new && (
+                                    <div className="absolute top-3 right-3 bg-green-500 text-white px-3 py-1.5 rounded-full font-bold text-xs sm:text-sm">
+                                        MỚI
+                                    </div>
+                                )}
                             </div>
                         </div>
-
                     </div>
 
-                    {/* Right Column - Product Info */}
+                    {/* Right - Product Info */}
                     <div className="flex flex-col">
-                        <h1 className="text-4xl font-black mb-3">ONE LIFE GRAPHIC T-SHIRT</h1>
+                        <div className="flex items-center gap-3 mb-3 flex-wrap">
+                            <img src={data.brand.logo} alt={data.brand.name} className="h-6 sm:h-8" />
+                            {data.is_bestseller && (
+                                <span className="bg-yellow-100 text-yellow-800 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
+                                    BÁN CHẠY
+                                </span>
+                            )}
+                        </div>
+
+                        <h1 className="text-2xl sm:text-4xl font-black mb-3">{data.name}</h1>
 
                         {/* Rating */}
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="flex">
-                                {[1, 2, 3, 4].map((star) => (
-                                    <svg key={star} className="w-5 h-5 fill-yellow-400" viewBox="0 0 20 20">
-                                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                    </svg>
+                        <div className="flex items-center gap-2 sm:gap-4 mb-4 flex-wrap text-sm sm:text-base">
+                            <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, idx) => (
+                                    <Star
+                                        key={idx}
+                                        className={`w-4 h-4 sm:w-5 sm:h-5 ${idx < Math.floor(data.stats.rating_average)
+                                            ? 'fill-yellow-400 text-yellow-400'
+                                            : 'text-gray-300'
+                                            }`}
+                                    />
                                 ))}
-                                <svg className="w-5 h-5 fill-yellow-400" viewBox="0 0 20 20">
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" clipPath="polygon(0 0, 50% 0, 50% 100%, 0 100%)" />
-                                </svg>
+                                <span className="ml-1 sm:ml-2">
+                                    {data.stats.rating_average} sao ({data.stats.review_count} đánh giá)
+                                </span>
                             </div>
-                            <span className="text-sm font-medium">4.5/5</span>
                         </div>
 
                         {/* Price */}
-                        <div className="flex items-center gap-3 mb-5">
-                            <span className="text-3xl font-bold">$260</span>
-                            <span className="text-2xl text-gray-400 line-through">$300</span>
-                            <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">-40%</span>
+                        <div className="bg-gray-50 p-4 sm:p-6 rounded-xl mb-5">
+                            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+                                <span className="text-2xl sm:text-4xl font-bold text-red-600">{data.formatted_price}</span>
+                                <span className="text-lg sm:text-xl text-gray-400 line-through">{data.formatted_compare_price}</span>
+                            </div>
                         </div>
 
                         {/* Description */}
-                        <p className="text-gray-600 mb-6 leading-relaxed">
-                            This graphic t-shirt which is perfect for any occasion. Crafted from a soft and breathable fabric, it offers superior comfort and style.
-                        </p>
+                        <p className="text-gray-700 mb-5 leading-relaxed text-sm sm:text-base">{data.description}</p>
 
-                        <div className="h-px bg-gray-200 mb-6"></div>
-
-                        {/* Color Selection */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-medium text-gray-600 mb-3">Select Colors</h3>
-                            <div className="flex gap-3">
-                                {colors.map((color) => (
+                        {/* Color */}
+                        <div className="mb-5">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                                Màu sắc: <span className="text-black">{selectedColor}</span>
+                            </h3>
+                            <div className="flex gap-2 flex-wrap">
+                                {data.available_colors.map(color => (
                                     <button
                                         key={color.name}
                                         onClick={() => setSelectedColor(color.name)}
-                                        className={`w-10 h-10 rounded-full ${color.class} flex items-center justify-center border-2 ${selectedColor === color.name ? 'border-black' : 'border-transparent'
+                                        className={`px-4 py-2 rounded-lg font-medium border-2 text-sm sm:text-base ${selectedColor === color.name
+                                            ? 'bg-black text-white border-black'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                                             }`}
                                     >
-                                        {selectedColor === color.name && (
-                                            <Check className="w-5 h-5 text-white" />
-                                        )}
+                                        {color.name}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="h-px bg-gray-200 mb-6"></div>
-
-                        {/* Size Selection */}
-                        <div className="mb-6">
-                            <h3 className="text-sm font-medium text-gray-600 mb-3">Choose Size</h3>
-                            <div className="flex gap-3 flex-wrap">
-                                {sizes.map((size) => (
+                        {/* Size */}
+                        <div className="mb-5">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                                Kích thước: <span className="text-black">{selectedSize}</span>
+                            </h3>
+                            <div className="flex gap-2 flex-wrap">
+                                {data.available_sizes.map(size => (
                                     <button
                                         key={size}
                                         onClick={() => setSelectedSize(size)}
-                                        className={`px-6 py-3 rounded-full font-medium transition-all ${selectedSize === size
-                                            ? 'bg-black text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        className={`w-14 sm:w-16 h-14 sm:h-16 rounded-lg font-semibold border-2 text-sm sm:text-base ${selectedSize === size
+                                            ? 'bg-black text-white border-black'
+                                            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
                                             }`}
                                     >
                                         {size}
@@ -139,29 +215,111 @@ function ProductDetail() {
                             </div>
                         </div>
 
-                        <div className="h-px bg-gray-200 mb-6"></div>
+                        {/* Stock */}
+                        <div className="mb-5">
+                            <div
+                                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm sm:text-base ${currentStock > 10
+                                    ? 'bg-green-100 text-green-800'
+                                    : currentStock > 0
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : 'bg-red-100 text-red-800'
+                                    }`}
+                            >
+                                <div
+                                    className={`w-2 h-2 rounded-full ${currentStock > 10
+                                        ? 'bg-green-500'
+                                        : currentStock > 0
+                                            ? 'bg-yellow-500'
+                                            : 'bg-red-500'
+                                        }`}
+                                ></div>
+                                <span>
+                                    {currentStock > 0
+                                        ? `Còn ${currentStock} sản phẩm`
+                                        : 'Hết hàng'}
+                                </span>
+                            </div>
+                        </div>
 
-                        {/* Quantity and Add to Cart */}
-                        <div className="flex gap-4">
-                            <div className="flex items-center bg-gray-100 rounded-full px-5">
+                        {/* Quantity & Add to Cart */}
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+                            <div className="flex items-center justify-between bg-gray-100 rounded-full px-4 sm:px-6 border-2 border-gray-200 w-full sm:w-auto">
                                 <button
                                     onClick={() => handleQuantityChange('decrement')}
-                                    className="p-3 hover:opacity-70 transition-opacity"
+                                    className="p-2 sm:p-3 hover:opacity-70"
+                                    disabled={quantity <= 1}
                                 >
-                                    <Minus className="w-4 h-4" />
+                                    <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
-                                <span className="w-12 text-center font-medium">{quantity}</span>
+                                <span className="w-10 sm:w-16 text-center font-bold text-lg">{quantity}</span>
                                 <button
                                     onClick={() => handleQuantityChange('increment')}
-                                    className="p-3 hover:opacity-70 transition-opacity"
+                                    className="p-2 sm:p-3 hover:opacity-70"
+                                    disabled={quantity >= currentStock}
                                 >
-                                    <Plus className="w-4 h-4" />
+                                    <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </button>
                             </div>
-                            <button className="flex-1 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 transition-colors">
-                                Add to Cart
+
+                            <button
+                                onClick={handleAddToCart}
+                                className="flex-1 bg-black text-white py-3 sm:py-4 rounded-full font-bold hover:bg-gray-800 flex items-center justify-center gap-2 text-sm sm:text-base"
+                            >
+                                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
+                                Thêm vào giỏ hàng
+                            </button>
+
+                            <button className="p-3 sm:p-4 bg-gray-100 rounded-full hover:bg-gray-200">
+                                <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
                             </button>
                         </div>
+
+                        {/* Features */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6 border-t">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-blue-100 rounded-lg">
+                                    <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-sm">Miễn phí vận chuyển</div>
+                                    <div className="text-xs text-gray-600">Đơn từ 500k</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-green-100 rounded-lg">
+                                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-sm">Bảo hành chính hãng</div>
+                                    <div className="text-xs text-gray-600">12 tháng</div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-yellow-100 rounded-lg">
+                                    <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-sm">Đổi trả dễ dàng</div>
+                                    <div className="text-xs text-gray-600">Trong 7 ngày</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tags */}
+                        {data.tags && (
+                            <div className="mt-5 pt-5 border-t">
+                                <div className="flex flex-wrap gap-2">
+                                    {data.tags.map((tag, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs sm:text-sm"
+                                        >
+                                            #{tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

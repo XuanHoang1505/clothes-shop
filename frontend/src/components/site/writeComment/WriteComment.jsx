@@ -388,33 +388,36 @@ function WriteComment() {
                     </div>
 
                     {/* Reviews Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6 mb-8">
                         {reviews.map((review) => (
-                            <div key={review.id} className="bg-white border-2 border-gray-100 rounded-2xl p-6 hover:border-gray-300 hover:shadow-lg transition-all">
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex gap-1">
-                                        {renderStars(review.rating)}
-                                    </div>
+                            <div
+                                key={review.id}
+                                className="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 hover:border-gray-300 hover:shadow-md transition-all duration-300"
+                            >
+                                {/* Stars */}
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex gap-1 flex-wrap">{renderStars(review.rating)}</div>
                                     <button className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-lg transition-all">
-                                        <MoreHorizontal className="w-5 h-5" />
+                                        <MoreHorizontal className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </button>
                                 </div>
 
-                                <div className="flex items-center gap-2 mb-4">
-                                    <h3 className="font-bold text-lg">{review.name}</h3>
+                                {/* Name */}
+                                <div className="flex items-center gap-2 mb-3">
+                                    <h3 className="font-bold text-base sm:text-lg">{review.name}</h3>
                                     {review.verified && (
                                         <div className="bg-green-500 rounded-full p-0.5">
-                                            <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-white" strokeWidth={3} />
                                         </div>
                                     )}
                                 </div>
 
-                                <p className="text-gray-600 mb-4 leading-relaxed">
+                                <p className="text-gray-600 text-sm sm:text-base mb-3 leading-relaxed break-words">
                                     {review.comment}
                                 </p>
 
-                                <p className="text-gray-400 text-sm font-medium">
-                                    Posted on {review.date}
+                                <p className="text-gray-400 text-xs sm:text-sm font-medium">
+                                    {review.date}
                                 </p>
                             </div>
                         ))}
@@ -422,7 +425,7 @@ function WriteComment() {
 
                     {/* Load More Button */}
                     <div className="flex justify-center">
-                        <button className="px-10 py-4 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all">
+                        <button className="px-6 sm:px-10 py-3 sm:py-4 border border-gray-300 rounded-xl text-sm sm:text-base font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all">
                             Load More Reviews
                         </button>
                     </div>
@@ -430,39 +433,40 @@ function WriteComment() {
                     {/* Review Modal */}
                     {showReviewModal && (
                         <div
-                            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+                            className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex justify-center items-center z-50 p-3 sm:p-4"
                             onClick={() => setShowReviewModal(false)}
                         >
                             <div
-                                className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-lg relative transform transition-all"
+                                className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md md:max-w-lg relative overflow-y-auto max-h-[90vh]"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                {/* Decorative gradient bar */}
-                                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-t-3xl"></div>
+                                {/* Gradient Bar */}
+                                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-t-2xl sm:rounded-t-3xl"></div>
 
-                                {/* Close button */}
+                                {/* Close */}
                                 <button
                                     onClick={() => setShowReviewModal(false)}
-                                    className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-500 text-gray-600 hover:text-white transition-all group"
+                                    className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 sm:w-10 h-8 sm:h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-500 text-gray-600 hover:text-white transition-all group"
                                 >
-                                    <X className="w-5 h-5 transform group-hover:rotate-90 transition-transform duration-300" />
+                                    <X className="w-4 sm:w-5 h-4 sm:h-5 transform group-hover:rotate-90 transition-transform duration-300" />
                                 </button>
 
                                 {/* Header */}
-                                <div className="text-center mb-8">
-                                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-400 via-orange-400 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl animate-pulse">
-                                        <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <div className="text-center mb-6 sm:mb-8 mt-4">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 via-orange-400 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-md animate-pulse">
+                                        <svg className="w-8 sm:w-10 h-8 sm:h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                         </svg>
                                     </div>
-                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Viết đánh giá</h2>
-                                    <p className="text-gray-500">Chia sẻ trải nghiệm của bạn với sản phẩm này</p>
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Viết đánh giá</h2>
+                                    <p className="text-gray-500 text-sm sm:text-base">Chia sẻ trải nghiệm của bạn</p>
                                 </div>
 
-                                <form onSubmit={handleSubmitReview} className="space-y-6">
-                                    {/* Name input */}
+                                {/* Form */}
+                                <form onSubmit={handleSubmitReview} className="space-y-4 sm:space-y-6">
+                                    {/* Name */}
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
                                             Tên của bạn <span className="text-red-500">*</span>
                                         </label>
                                         <input
@@ -471,17 +475,17 @@ function WriteComment() {
                                             value={reviewName}
                                             onChange={(e) => setReviewName(e.target.value)}
                                             placeholder="Nhập tên của bạn"
-                                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all"
+                                            className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all"
                                         />
                                     </div>
 
-                                    {/* Star rating */}
+                                    {/* Rating */}
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                                        <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-3">
                                             Đánh giá của bạn <span className="text-red-500">*</span>
                                         </label>
-                                        <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl py-6 px-4 border-2 border-gray-200">
-                                            <div className="flex items-center justify-center space-x-3">
+                                        <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl py-4 sm:py-6 px-2 sm:px-4 border border-gray-200">
+                                            <div className="flex items-center justify-center space-x-2 sm:space-x-3 flex-wrap">
                                                 {[1, 2, 3, 4, 5].map((star) => (
                                                     <button
                                                         key={star}
@@ -489,67 +493,61 @@ function WriteComment() {
                                                         onClick={() => setRating(star)}
                                                         onMouseEnter={() => setHoverRating(star)}
                                                         onMouseLeave={() => setHoverRating(0)}
-                                                        className="focus:outline-none transform hover:scale-125 transition-transform duration-200"
+                                                        className="focus:outline-none transform hover:scale-110 sm:hover:scale-125 transition-transform duration-200"
                                                     >
                                                         <svg
                                                             xmlns="http://www.w3.org/2000/svg"
                                                             viewBox="0 0 24 24"
-                                                            fill={(hoverRating || rating) >= star ? "#FACC15" : "#E5E7EB"}
-                                                            className="w-12 h-12 transition-all duration-200 drop-shadow-lg"
+                                                            fill={(hoverRating || rating) >= star ? '#FACC15' : '#E5E7EB'}
+                                                            className="w-8 sm:w-10 h-8 sm:h-10 transition-all duration-200 drop-shadow-lg"
                                                         >
                                                             <path d="M12 .587l3.668 7.568L24 9.748l-6 5.84 1.417 8.251L12 19.771l-7.417 4.068L6 15.588 0 9.748l8.332-1.593z" />
                                                         </svg>
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className="text-center mt-4">
+
+                                            <div className="text-center mt-3 sm:mt-4">
                                                 {rating ? (
-                                                    <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-md border-2 border-gray-200">
-                                                        <span className="text-2xl">{getRatingEmoji(rating).emoji}</span>
-                                                        <span className={`font-bold ${getRatingEmoji(rating).color}`}>
+                                                    <div className="inline-flex items-center gap-2 bg-white px-3 sm:px-4 py-2 rounded-full shadow border border-gray-200">
+                                                        <span className="text-xl sm:text-2xl">{getRatingEmoji(rating).emoji}</span>
+                                                        <span className={`font-bold text-sm sm:text-base ${getRatingEmoji(rating).color}`}>
                                                             {getRatingEmoji(rating).text}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-gray-400 font-medium">Nhấp để chọn số sao</span>
+                                                    <span className="text-gray-400 text-sm font-medium">Nhấp để chọn sao</span>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Review content */}
+                                    {/* Comment */}
                                     <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
                                             Nội dung đánh giá <span className="text-red-500">*</span>
                                         </label>
                                         <textarea
-                                            rows="5"
+                                            rows="4"
                                             required
                                             value={reviewContent}
                                             onChange={(e) => setReviewContent(e.target.value)}
-                                            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all resize-none"
-                                            placeholder="Hãy chia sẻ những gì bạn thích về sản phẩm này..."
+                                            className="w-full border border-gray-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all resize-none"
+                                            placeholder="Chia sẻ cảm nhận của bạn..."
                                         ></textarea>
-                                        <div className="flex items-center justify-between mt-2">
-                                            <p className={`text-xs font-medium ${reviewContent.length < 20 ? 'text-red-500' : 'text-green-600'}`}>
-                                                {reviewContent.length < 20
-                                                    ? `Còn ${20 - reviewContent.length} ký tự nữa`
-                                                    : `✓ Đủ độ dài`}
-                                            </p>
-                                            <p className="text-xs text-gray-400">{reviewContent.length} ký tự</p>
-                                        </div>
                                     </div>
 
-                                    {/* Submit button */}
+                                    {/* Submit */}
                                     <button
                                         type="submit"
-                                        className="w-full py-4 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 text-white rounded-xl font-bold hover:from-gray-800 hover:via-gray-700 hover:to-gray-600 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl hover:shadow-2xl"
+                                        className="w-full py-3 sm:py-4 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 text-white rounded-xl font-bold text-sm sm:text-base hover:from-gray-800 hover:to-gray-600 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                                     >
                                         Gửi đánh giá
                                     </button>
                                 </form>
                             </div>
                         </div>
+
                     )}
                 </>
             )}
