@@ -7,8 +7,6 @@ use App\Http\Requests\Product\UpdateProductRequest;
 use App\Services\Interfaces\ProductServiceInterface;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
-use Illuminate\Container\Attributes\Log;
-use PgSql\Lob;
 
 class ProductController extends Controller
 {
