@@ -2,6 +2,7 @@
 namespace App\Repositories\Eloquent;
 use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use Illuminate\Support\Facades\Hash;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -19,7 +20,6 @@ class UserRepository implements UserRepositoryInterface
         return User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'phone' => $data['phone'],
             'password' => Hash::make($data['password']),
         ]);
     }

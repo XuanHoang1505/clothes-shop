@@ -8,7 +8,6 @@ use App\Services\Interfaces\ProductServiceInterface;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 
-
 class ProductController extends Controller
 {
     protected $productService;

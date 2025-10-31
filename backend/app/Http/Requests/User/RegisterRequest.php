@@ -1,8 +1,7 @@
 <?php
 namespace App\Http\Requests\User;
 use App\Http\Requests\BaseRequest;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
+
 
 class RegisterRequest extends BaseRequest
 {
