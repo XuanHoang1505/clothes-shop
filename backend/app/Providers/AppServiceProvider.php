@@ -2,8 +2,15 @@
 
 namespace App\Providers;
 
+use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\UserRepository;
+use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Services\Implementations\ProductService;
+use App\Services\Implementations\UserService;
+use App\Services\Interfaces\ProductServiceInterface;
+use App\Services\Interfaces\UserServiceInterface;
+use App\Services\OtpService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,21 +22,28 @@ class AppServiceProvider extends ServiceProvider
     {
         // Bind Service
         $this->app->bind(
-            \App\Services\Interfaces\ProductServiceInterface::class,
-            \App\Services\Implementations\ProductService::class
+            ProductServiceInterface::class,
+            ProductService::class
         );
 
         $this->app->bind(
-            \App\Services\Interfaces\UserServiceInterface::class,
-            \App\Services\Implementations\UserService::class
+            UserServiceInterface::class,
+            UserService::class
         );
         // Bind Repository
         $this->app->bind(
-            \App\Repositories\Interfaces\ProductRepositoryInterface::class,
-            \App\Repositories\Eloquent\ProductRepository::class
+            ProductRepositoryInterface::class,
+            ProductRepository::class
         );
 
-        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(
+            UserRepositoryInterface::class, 
+            UserRepository::class
+        );
+
+        $this->app->singleton(OtpService::class, function ($app) {
+            return new OtpService();
+        });  
     }
 
     /**

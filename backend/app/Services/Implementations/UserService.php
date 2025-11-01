@@ -1,8 +1,12 @@
 <?php
 namespace App\Services\Implementations;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
 
 class UserService implements UserServiceInterface
 {
@@ -41,6 +45,27 @@ class UserService implements UserServiceInterface
     public function register(array $data)
     {
         return $this->userRepository->create($data);
+    }
+
+    public function login(array $credentials)
+    {
+        $user = $this->userRepository->findByEmail($credentials['email']);
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return [
+                'success' => false,
+                'message' => 'Password or email is incorrect',
+            ];
+        }
+
+        $token = JWTAuth::fromUser($user);
+
+        return [
+            'success' => true,
+            'message' => 'Login successful',
+            'user' => new UserResource($user),
+            'token' => $token,
+        ];
     }
     
 }

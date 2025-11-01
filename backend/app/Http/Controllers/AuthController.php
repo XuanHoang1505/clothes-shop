@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Requests\User\LoginRequest;
 use App\Services\Interfaces\UserServiceInterface;
 use Illuminate\Http\JsonResponse;
 use App\Http\Resources\UserResource;    
 use App\Http\Requests\User\RegisterRequest;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 
 class AuthController extends Controller
@@ -23,5 +25,31 @@ class AuthController extends Controller
             'message' => 'Đăng ký thành công!',
             'data'    => new UserResource($user),
         ], 201);
+    }
+
+    public function login(LoginRequest $request): JsonResponse
+    {
+        $result = $this->userService->login($request->validated());
+
+        if (!$result['success']) {
+            return response()->json([
+                'message' => $result['message'],
+            ], 401);
+        }
+
+        return response()->json([
+            'message' => $result['message'],
+            'user' => $result['user'],
+            'access_token' => $result['token'],
+        ], 200);
+    }
+
+    public function logout(): JsonResponse
+    {
+        JWTAuth::invalidate(JWTAuth::getToken());
+
+        return response()->json([
+            'message' => 'Đăng xuất thành công!',
+        ], 200);
     }
 }
