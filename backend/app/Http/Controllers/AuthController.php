@@ -7,8 +7,6 @@ use App\Http\Resources\UserResource;
 use App\Http\Requests\User\RegisterRequest;
 
 
-use Illuminate\Http\Request;
-
 class AuthController extends Controller
 {
     protected $userService;
