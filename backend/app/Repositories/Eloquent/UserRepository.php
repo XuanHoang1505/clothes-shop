@@ -33,4 +33,35 @@ class UserRepository implements UserRepositoryInterface
     {
         return User::destroy($id);
     }
+        /**
+     * Tìm user theo email
+     */
+    public function findByEmail(string $email)
+    {
+        return User::where('email', $email)->first();
+    }
+
+    /**
+     * Cập nhật mật khẩu
+     */
+    public function updatePassword(int $userId, string $password): bool
+    {
+        $user = User::find($userId);
+        
+        if (!$user) {
+            return false;
+        }
+
+        $user->password = Hash::make($password);
+        return $user->save();
+    }
+
+    /**
+     * Kiểm tra email có tồn tại không
+     */
+    public function emailExists(string $email): bool
+    {
+        return User::where('email', $email)->exists();
+    }
+    
 }
