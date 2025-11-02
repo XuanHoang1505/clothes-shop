@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Notifications\Notifiable;
 use MongoDB\Laravel\Eloquent\Model;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Model implements JWTSubject
 {
+    use Notifiable;
     protected $connection = 'mongodb';
     protected $collection = 'users';
 
