@@ -36,6 +36,7 @@ class OtpService
         Cache::put($key, [
             'otp' => $otp,
             'attempts' => 0,
+            'is_verified' => false,
             'created_at' => Carbon::now()->toDateTimeString()
         ], now()->addMinutes($this->expiryMinutes));
 
@@ -62,23 +63,35 @@ class OtpService
 
         // Tăng số lần thử
         $data['attempts']++;
-        Cache::put($key, $data, now()->addMinutes($this->expiryMinutes));
-
+        
         // Kiểm tra OTP
         if ($data['otp'] === $otp) {
-            Cache::forget($key); // Xóa OTP sau khi verify thành công
+            // OTP đúng → Đánh dấu đã verified
+            $data['is_verified'] = true;
+            Cache::put($key, $data, now()->addMinutes($this->expiryMinutes));
             return true;
         }
 
+        // OTP sai → Lưu lại số lần thử
+        Cache::put($key, $data, now()->addMinutes($this->expiryMinutes));
         return false;
     }
 
     /**
-     * Kiểm tra OTP có tồn tại không (không tăng attempts)
+     * Kiểm tra OTP có tồn tại không
      */
     public function exists(string $email): bool
     {
         return Cache::has($this->getOtpKey($email));
+    }
+
+    /**
+     * Kiểm tra OTP đã được verified chưa
+     */
+    public function isVerified(string $email): bool
+    {
+        $data = Cache::get($this->getOtpKey($email));
+        return $data && ($data['is_verified'] ?? false);
     }
 
     /**
@@ -90,28 +103,21 @@ class OtpService
     }
 
     /**
-     * Lấy thông tin OTP (để debug)
+     * Lấy số lần thử còn lại
      */
-    public function getInfo(string $email): ?array
+    public function getRemainingAttempts(string $email): int
     {
         $data = Cache::get($this->getOtpKey($email));
         
         if (!$data) {
-            return null;
+            return $this->maxAttempts;
         }
 
-        return [
-            'created_at' => $data['created_at'],
-            'attempts' => $data['attempts'],
-            'max_attempts' => $this->maxAttempts,
-            'expires_in' => Cache::get($this->getOtpKey($email)) 
-                ? 'Còn ' . now()->diffInMinutes(now()->addMinutes($this->expiryMinutes)) . ' phút'
-                : 'Đã hết hạn'
-        ];
+        return max(0, $this->maxAttempts - $data['attempts']);
     }
 
     /**
-     * Kiểm tra rate limit cho resend
+     * Kiểm tra có thể resend không
      */
     public function canResend(string $email): bool
     {
@@ -120,22 +126,13 @@ class OtpService
     }
 
     /**
-     * Set rate limit cho resend (1 phút)
+     * Set rate limit cho resend
      */
     public function setResendLimit(string $email): void
     {
         $key = $this->getResendKey($email);
-        Cache::put($key, true, now()->addMinute());
-    }
-
-    /**
-     * Lấy thời gian còn lại trước khi có thể resend
-     */
-    public function getResendCooldown(string $email): int
-    {
-        $key = $this->getResendKey($email);
-        $ttl = Cache::get($key);
-        return $ttl ? 60 : 0; // seconds
+        $cooldown = config('otp.resend_cooldown', 60);
+        Cache::put($key, true, now()->addSeconds($cooldown));
     }
 
     /**
@@ -152,19 +149,5 @@ class OtpService
     protected function getResendKey(string $email): string
     {
         return 'otp:resend:' . md5(strtolower($email));
-    }
-
-    /**
-     * Lấy số lần thử còn lại
-     */
-    public function getRemainingAttempts(string $email): int
-    {
-        $data = Cache::get($this->getOtpKey($email));
-        
-        if (!$data) {
-            return $this->maxAttempts;
-        }
-
-        return max(0, $this->maxAttempts - $data['attempts']);
     }
 }

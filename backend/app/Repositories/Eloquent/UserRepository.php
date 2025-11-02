@@ -44,7 +44,7 @@ class UserRepository implements UserRepositoryInterface
     /**
      * Cập nhật mật khẩu
      */
-    public function updatePassword(int $userId, string $password): bool
+    public function updatePassword(string $userId, string $password): bool
     {
         $user = User::find($userId);
         
