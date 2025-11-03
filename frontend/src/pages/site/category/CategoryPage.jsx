@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Slider, Drawer, Spin, Rate, Pagination, message } from "antd";
 import { SlidersHorizontal, ChevronRight, X } from "lucide-react";
 import ProductService from "@/services/site/ProductService";
-import formatNumber from "@/utils/Formatter";
+import { formatNumber } from "@/utils/Formatter";
+import { Link } from "react-router-dom";
 
 function CategoryPage() {
   const categorySlug = "formal"; // Lấy từ tham số URL hoặc props trong thực tế
@@ -178,11 +179,10 @@ function CategoryPage() {
             <button
               key={index}
               onClick={() => setSelectedSize(size)}
-              className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                selectedSize === size
-                  ? "bg-black text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+              className={`px-4 py-2 rounded-full text-sm transition-colors ${selectedSize === size
+                ? "bg-black text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
             >
               {size}
             </button>
@@ -250,41 +250,47 @@ function CategoryPage() {
             <Spin spinning={loading}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map((product) => (
-                  <div key={product.id} className="group cursor-pointer">
-                    <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
-                      <img
-                        src={product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                  <Link
+                    key={product.id}
+                    to={`/product/${product.slug}`}
+                    className="group cursor-pointer block text-inherit no-underline"
+                  >
+                    <div key={product.id} className="group cursor-pointer">
+                      <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
+                        <img
+                          src={product.images[0]}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                      <h3 className="font-bold text-lg mb-2">{product.name}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Rate
+                          disabled
+                          defaultValue={5}
+                          className="text-sm"
+                        />
+                        <span className="text-sm text-gray-600">
+                          5/5
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xl">
+                          {formatNumber(product.price)}
+                        </span>
+                        {product.compare_price && (
+                          <>
+                            <span className="text-gray-400 line-through">
+                              ${product.compare_price}
+                            </span>
+                            <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                              {calculateDiscount(product.compare_price, product.price)}
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="font-bold text-lg mb-2">{product.name}</h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Rate
-                        disabled
-                        defaultValue={5}
-                        className="text-sm"
-                      />
-                      <span className="text-sm text-gray-600">
-                        5/5
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xl">
-                        {formatNumber(product.price)}
-                      </span>
-                      {product.compare_price && (
-                        <>
-                          <span className="text-gray-400 line-through">
-                            ${product.compare_price}
-                          </span>
-                          <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                            {calculateDiscount(product.compare_price, product.price)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
 

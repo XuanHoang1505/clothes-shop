@@ -1,13 +1,15 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import ProductDetailsPage from "@pages/site/ProductDetailsPage";
+import CategoryPage from "@pages/site/category/CategoryPage";
+import Home from "@pages/site/home/Home";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/product/:slug" element={<ProductDetailsPage />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/category" element={<CategoryPage />} />
+      <Route path="/product/:slug" element={<ProductDetailsPage />} />
+    </Routes>
   );
 }
 
