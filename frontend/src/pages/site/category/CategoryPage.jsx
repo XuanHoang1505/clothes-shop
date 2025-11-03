@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Slider, Drawer, Spin, Rate, Pagination, message } from "antd";
 import { SlidersHorizontal, ChevronRight, X } from "lucide-react";
 import ProductService from "@/services/site/ProductService";
-import formatNumber from "@/utils/Formatter";
+import { formatNumber } from "@/utils/Formatter";
 
 function CategoryPage() {
   const categorySlug = "formal"; // Lấy từ tham số URL hoặc props trong thực tế
@@ -109,7 +109,7 @@ function CategoryPage() {
     if (!originalPrice || originalPrice <= price) return null;
     const discount = ((originalPrice - price) / originalPrice) * 100;
     return `-${Math.round(discount)}%`;
-  }
+  };
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -260,14 +260,8 @@ function CategoryPage() {
                     </div>
                     <h3 className="font-bold text-lg mb-2">{product.name}</h3>
                     <div className="flex items-center gap-2 mb-2">
-                      <Rate
-                        disabled
-                        defaultValue={5}
-                        className="text-sm"
-                      />
-                      <span className="text-sm text-gray-600">
-                        5/5
-                      </span>
+                      <Rate disabled defaultValue={5} className="text-sm" />
+                      <span className="text-sm text-gray-600">5/5</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xl">
@@ -276,10 +270,13 @@ function CategoryPage() {
                       {product.compare_price && (
                         <>
                           <span className="text-gray-400 line-through">
-                            ${product.compare_price}
+                            {product.compare_price}
                           </span>
                           <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                            {calculateDiscount(product.compare_price, product.price)}
+                            {calculateDiscount(
+                              product.compare_price,
+                              product.price
+                            )}
                           </span>
                         </>
                       )}
