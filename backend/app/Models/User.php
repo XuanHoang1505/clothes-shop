@@ -16,11 +16,17 @@ class User extends Model implements JWTSubject
         'name',
         'email',
         'password',
+        'role',
     ];
 
     protected $hidden = [
         'password',
     ];
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
 
     public function getJWTIdentifier()
     {
@@ -33,4 +39,5 @@ class User extends Model implements JWTSubject
         // Trả về thêm các thông tin custom muốn đưa vào token (nếu có)
         return [];
     }
+
 }
