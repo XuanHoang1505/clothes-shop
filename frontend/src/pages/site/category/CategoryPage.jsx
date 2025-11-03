@@ -1,12 +1,21 @@
-import { useState } from "react";
-import { Slider, Drawer, Button, Rate, Pagination } from "antd";
+import { useEffect, useState } from "react";
+import { Slider, Drawer, Spin, Rate, Pagination, message } from "antd";
 import { SlidersHorizontal, ChevronRight, X } from "lucide-react";
+import ProductService from "@/services/site/ProductService";
+import formatNumber from "@/utils/Formatter";
 
 function CategoryPage() {
+  const categorySlug = "formal"; // Lấy từ tham số URL hoặc props trong thực tế
   const [priceRange, setPriceRange] = useState([50, 200]);
   const [selectedSize, setSelectedSize] = useState("Large");
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 9,
+    total: 0,
+  });
 
   const categoryList = ["T-shirts", "Shorts", "Shirts", "Hoodie", "Jeans"];
   const colorList = [
@@ -19,24 +28,88 @@ function CategoryPage() {
     { name: "purple", hex: "#A855F7" },
     { name: "pink", hex: "#EC4899" },
     { name: "white", hex: "#FFFFFF" },
-    { name: "black", hex: "#000000" }
+    { name: "black", hex: "#000000" },
   ];
 
-  const sizeList = ["XX-Small", "X-Small", "Small", "Medium", "Large", "X-Large", "XX-Large", "3X-Large", "4X-Large"];
-  
+  const sizeList = [
+    "XX-Small",
+    "X-Small",
+    "Small",
+    "Medium",
+    "Large",
+    "X-Large",
+    "XX-Large",
+    "3X-Large",
+    "4X-Large",
+  ];
+
   const dressStyleList = ["Casual", "Formal", "Party", "Gym"];
 
-  const products = [
-    { id: 1, name: "Gradient Graphic T-shirt", price: 145, originalPrice: null, discount: null, rating: 3.5, image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop" },
-    { id: 2, name: "Polo with Tipping Details", price: 180, originalPrice: 242, discount: "-20%", rating: 4.5, image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=300&h=300&fit=crop" },
-    { id: 3, name: "Black Striped T-shirt", price: 120, originalPrice: 160, discount: "-30%", rating: 5.0, image: "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=300&h=300&fit=crop" },
-    { id: 4, name: "Skinny Fit Jeans", price: 240, originalPrice: 260, discount: "-20%", rating: 3.5, image: "https://images.unsplash.com/photo-1542272604-787c3835535d?w=300&h=300&fit=crop" },
-    { id: 5, name: "Checkered Shirt", price: 180, originalPrice: null, discount: null, rating: 4.5, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&h=300&fit=crop" },
-    { id: 6, name: "Sleeve Striped T-shirt", price: 130, originalPrice: 160, discount: "-30%", rating: 4.5, image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=300&h=300&fit=crop" },
-    { id: 7, name: "Vertical Striped Shirt", price: 212, originalPrice: 232, discount: "-20%", rating: 5.0, image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=300&h=300&fit=crop" },
-    { id: 8, name: "Courage Graphic T-shirt", price: 145, originalPrice: null, discount: null, rating: 4.0, image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=300&h=300&fit=crop" },
-    { id: 9, name: "Loose Fit Bermuda Shorts", price: 80, originalPrice: null, discount: null, rating: 3.0, image: "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=300&h=300&fit=crop" }
-  ];
+  // const products = [
+  //   {
+  //     id: 1,
+  //     name: "Gradient Graphic T-shirt",
+  //     price: 145,
+  //     originalPrice: null,
+  //     discount: null,
+  //     rating: 3.5,
+  //     image:
+  //       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Polo with Tipping Details",
+  //     price: 180,
+  //     originalPrice: 242,
+  //     discount: "-20%",
+  //     rating: 4.5,
+  //     image:
+  //       "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=300&h=300&fit=crop",
+  //   }
+  // ];
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const result = await ProductService.getProductsByCategory(
+        categorySlug,
+        pagination.current,
+        pagination.pageSize
+      );
+
+      setProducts(result.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: result.total || 0,
+      }));
+    } catch (error) {
+      message.error("Không thể tải sản phẩm. Vui lòng thử lại!");
+      console.error("Lỗi khi lấy sản phẩm theo danh mục:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, [categorySlug, pagination.current, pagination.pageSize]);
+
+  const handlePaginationChange = (page, pageSize) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: page,
+      pageSize: pageSize,
+    }));
+
+    // Scroll to top khi đổi trang
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const calculateDiscount = (originalPrice, price) => {
+    if (!originalPrice || originalPrice <= price) return null;
+    const discount = ((originalPrice - price) / originalPrice) * 100;
+    return `-${Math.round(discount)}%`;
+  }
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -70,7 +143,7 @@ function CategoryPage() {
           onChange={setPriceRange}
           styles={{
             track: { backgroundColor: "black" },
-            tracks: { backgroundColor: "black" }
+            tracks: { backgroundColor: "black" },
           }}
         />
         <div className="flex justify-between mt-3 text-sm font-semibold">
@@ -87,9 +160,9 @@ function CategoryPage() {
             <button
               key={index}
               className="w-9 h-9 rounded-full border-2 border-gray-200 hover:scale-110 transition-transform cursor-pointer"
-              style={{ 
+              style={{
                 backgroundColor: color.hex,
-                borderColor: color.hex === "#FFFFFF" ? "#e5e7eb" : color.hex
+                borderColor: color.hex === "#FFFFFF" ? "#e5e7eb" : color.hex,
               }}
               aria-label={color.name}
             />
@@ -174,48 +247,62 @@ function CategoryPage() {
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <div key={product.id} className="group cursor-pointer">
-                  <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+            <Spin spinning={loading}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <div key={product.id} className="group cursor-pointer">
+                    <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Rate
+                        disabled
+                        defaultValue={5}
+                        className="text-sm"
+                      />
+                      <span className="text-sm text-gray-600">
+                        5/5
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xl">
+                        {formatNumber(product.price)}
+                      </span>
+                      {product.compare_price && (
+                        <>
+                          <span className="text-gray-400 line-through">
+                            ${product.compare_price}
+                          </span>
+                          <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                            {calculateDiscount(product.compare_price, product.price)}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <h3 className="font-bold text-lg mb-2">{product.name}</h3>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Rate disabled defaultValue={product.rating} className="text-sm" />
-                    <span className="text-sm text-gray-600">{product.rating}/5</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xl">${product.price}</span>
-                    {product.originalPrice && (
-                      <>
-                        <span className="text-gray-400 line-through">
-                          ${product.originalPrice}
-                        </span>
-                        <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                          {product.discount}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            {/* Pagination */}
-            <div className="mt-8 flex justify-center">
-              <Pagination
-                current={currentPage}
-                total={100}
-                pageSize={9}
-                onChange={setCurrentPage}
-                showSizeChanger={false}
-              />
-            </div>
+              {/* Pagination */}
+              <div className="mt-8 flex justify-center">
+                <Pagination
+                  current={pagination.current}
+                  pageSize={pagination.pageSize}
+                  total={pagination.total}
+                  onChange={handlePaginationChange}
+                  onShowSizeChange={handlePaginationChange}
+                  showSizeChanger
+                  showQuickJumper
+                  showTotal={(total) => `Tổng ${total} sản phẩm`}
+                  pageSizeOptions={["9", "15", "20", "30", "50"]}
+                />
+              </div>
+            </Spin>
           </main>
         </div>
       </div>
