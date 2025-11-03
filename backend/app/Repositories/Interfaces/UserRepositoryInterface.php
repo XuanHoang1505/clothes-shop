@@ -12,5 +12,6 @@ interface UserRepositoryInterface
     public function findByEmail(string $email);
     public function updatePassword(string $userId, string $password): bool;
     public function emailExists(string $email): bool;
+    
 
 }

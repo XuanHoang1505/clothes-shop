@@ -41,25 +41,25 @@ class Product extends Model
         'stats',           // Object with rating, views, etc
     ];
 
-    protected $casts = [
-        '_id' => 'string',
-        'price' => 'integer',
-        'compare_price' => 'integer',
-        'cost_price' => 'integer',
-        'stock' => 'integer',
-        'weight' => 'integer',
-        'category' => 'array',
-        'brand' => 'array',
-        'images' => 'array',
-        'variants' => 'array',
-        'tags' => 'array',
-        'dimensions' => 'array',
-        'meta_keywords' => 'array',
-        'stats' => 'array',
-        'is_featured' => 'boolean',
-        'is_active' => 'boolean',
-        'is_new' => 'boolean',
-        'is_bestseller' => 'boolean',
-    ];
+    // protected $casts = [
+    //     '_id' => 'string',
+    //     'price' => 'integer',
+    //     'compare_price' => 'integer',
+    //     'cost_price' => 'integer',
+    //     'stock' => 'integer',
+    //     'weight' => 'integer',
+    //     'category' => 'object',
+    //     'brand' => 'array',
+    //     'images' => 'array',
+    //     'variants' => 'array',
+    //     'tags' => 'array',
+    //     'dimensions' => 'array',
+    //     'meta_keywords' => 'array',
+    //     'stats' => 'array',
+    //     'is_featured' => 'boolean',
+    //     'is_active' => 'boolean',
+    //     'is_new' => 'boolean',
+    //     'is_bestseller' => 'boolean',
+    // ];
 
 }

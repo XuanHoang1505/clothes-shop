@@ -27,6 +27,21 @@ const getProductById = async (id) => {
   }
 };
 
+  const getProductsByCategory = async (categorySlug, page = 1, pageSize = 9) => {
+    try {
+      const response = await axiosInstance.get(`${API_URL}/category/${categorySlug}`, {
+        params: {
+          current: page,
+          pageSize: pageSize
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Lỗi khi lấy sản phẩm theo danh mục: ${categorySlug}`, error);
+      throw error;
+    }
+  };
+
 // ➕ Tạo mới sản phẩm
 const createProduct = async (productData) => {
   try {
@@ -67,6 +82,7 @@ const deleteProduct = async (id) => {
 const ProductService = {
   getProducts,
   getProductById,
+  getProductsByCategory,
   createProduct,
   updateProduct,
   deleteProduct,
