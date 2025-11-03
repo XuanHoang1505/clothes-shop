@@ -26,22 +26,32 @@ const getProductById = async (id) => {
     throw error;
   }
 };
+// Lấy sản phẩm theo slug
+const getProductBySlug = async (slug) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/${slug}`);
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    console.error(`Lỗi khi lấy product slug: ${slug}`, error);
+    throw error;
+  }
+};
 
-  const getProductsByCategory = async (categorySlug, page = 1, pageSize = 9) => {
-    try {
-      const response = await axiosInstance.get(`${API_URL}/category/${categorySlug}`, {
-        params: {
-          current: page,
-          pageSize: pageSize
-        }
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`Lỗi khi lấy sản phẩm theo danh mục: ${categorySlug}`, error);
-      throw error;
-    }
-  };
-
+const getProductsByCategory = async (categorySlug, page = 1, pageSize = 9) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/category/${categorySlug}`, {
+      params: {
+        current: page,
+        pageSize: pageSize
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi lấy sản phẩm theo danh mục: ${categorySlug}`, error);
+    throw error;
+  }
+};
 // ➕ Tạo mới sản phẩm
 const createProduct = async (productData) => {
   try {
@@ -82,6 +92,7 @@ const deleteProduct = async (id) => {
 const ProductService = {
   getProducts,
   getProductById,
+  getProductBySlug,
   getProductsByCategory,
   createProduct,
   updateProduct,

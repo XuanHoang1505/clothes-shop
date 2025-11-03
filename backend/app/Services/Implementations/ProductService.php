@@ -38,6 +38,7 @@ class ProductService implements ProductServiceInterface
         }
     }
 
+
     public function getProductsByCategory(string $categorySlug, int $page = 1, int $pageSize = 15): array
     {
         try {
@@ -264,6 +265,16 @@ class ProductService implements ProductServiceInterface
             ];
         }
     }
+    public function getProductById(string $id)
+    {
+        return $this->productRepository->findById($id);
+    }
+
+    public function getProductBySlug(string $slug)
+    {
+        return $this->productRepository->findBySlug($slug);
+    }
+
 
     public function createProduct(array $data): array
     {

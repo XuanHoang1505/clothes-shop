@@ -74,4 +74,6 @@ interface ProductServiceInterface
      * Kiểm tra sản phẩm còn hàng
      */
     public function checkStock(string $id, int $quantity = 1): array;
+
+    public function getProductBySlug (string $slug);
 }

@@ -117,6 +117,11 @@ class ProductController extends Controller
         return response()->json($result);
     }
 
+    public function findBySlug  ($slug)
+    {
+        $product = $this->productService->getProductBySlug($slug);
+        return new ProductResource($product);
+    }
     public function store(CreateProductRequest $request)
     {
         $result = $this->productService->createProduct($request->validated());

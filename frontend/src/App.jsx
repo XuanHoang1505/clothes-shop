@@ -1,16 +1,16 @@
-import Home from '@pages/site/home/Home'
-import ProductDetailsPage from '@pages/site/ProductDetailsPage'
-import Cart from '@pages/site/cart/Cart'
-import CategoryPage from '@pages/site/category/CategoryPage'
+import { Routes, Route } from "react-router-dom";
+import ProductDetailsPage from "@pages/site/ProductDetailsPage";
+import CategoryPage from "@pages/site/category/CategoryPage";
+import Home from "@pages/site/home/Home";
+
 function App() {
-
-
   return (
-    <>
-      {/* <Cart /> */}
-      <CategoryPage />
-    </>
-  )
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/category" element={<CategoryPage />} />
+      <Route path="/product/:slug" element={<ProductDetailsPage />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;

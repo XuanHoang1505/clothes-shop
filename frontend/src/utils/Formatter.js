@@ -13,3 +13,4 @@ export const formatRevenue = (number) => {
     return `${formatNumber(billion.toFixed(2))} Tỷ VNĐ`;
   }
 };
+
