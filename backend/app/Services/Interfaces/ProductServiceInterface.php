@@ -7,6 +7,7 @@ interface ProductServiceInterface
 {
     public function getAllProducts();
     public function getProductById(string $id);
+    public function getProductBySlug (string $slug);
     public function createProduct(array $data);
     public function updateProduct(Product $product, array $data); 
     public function deleteProduct(Product $product); 

@@ -27,6 +27,18 @@ const getProductById = async (id) => {
   }
 };
 
+// Lấy sản phẩm theo slug
+const getProductBySlug = async (slug) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/${slug}`);
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    console.error(`Lỗi khi lấy product slug: ${slug}`, error);
+    throw error;
+  }
+};
+
 // ➕ Tạo mới sản phẩm
 const createProduct = async (productData) => {
   try {
@@ -67,6 +79,7 @@ const deleteProduct = async (id) => {
 const ProductService = {
   getProducts,
   getProductById,
+  getProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct,

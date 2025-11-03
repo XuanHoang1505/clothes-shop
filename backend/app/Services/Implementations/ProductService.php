@@ -24,6 +24,10 @@ class ProductService implements ProductServiceInterface
         return $this->productRepository->findById($id);
     }
 
+    public function getProductBySlug(string $slug)
+    {
+        return $this->productRepository->findBySlug($slug);
+    }
     public function createProduct(array $data)
     {
         return $this->productRepository->create($data);
