@@ -4,6 +4,7 @@ import { Minus, Plus } from "lucide-react";
 import ProductService from "@/services/site/ProductService";
 import { formatNumber } from "@/utils/Formatter";
 
+
 function ProductDetail({ productSlug: propSlug }) {
     const { slug: routeSlug } = useParams();
     const productSlug = propSlug || routeSlug;
@@ -15,48 +16,16 @@ function ProductDetail({ productSlug: propSlug }) {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedVariant, setSelectedVariant] = useState(null);
 
-    // Helper function to convert MongoDB BSON to plain object
-    const convertBSONToPlain = (obj) => {
-        if (obj === null || obj === undefined) return obj;
-
-        // Handle arrays
-        if (Array.isArray(obj)) {
-            return obj.map(item => convertBSONToPlain(item));
-        }
-
-        // Handle objects
-        if (typeof obj === 'object') {
-            // Check if it's a MongoDB ObjectId
-            if (obj.$oid) return obj.$oid;
-
-            // Check if it's a Date
-            if (obj.$date) return new Date(obj.$date);
-
-            // Recursively convert nested objects
-            const plain = {};
-            for (const key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    plain[key] = convertBSONToPlain(obj[key]);
-                }
-            }
-            return plain;
-        }
-
-        return obj;
-    };
 
     // Parse product data and ensure all fields are properly formatted
-    const parseProductData = (rawData) => {
-        if (!rawData) return null;
-
-        // First convert BSON to plain object
-        const data = convertBSONToPlain(rawData);
+    const parseProductData = (data) => {
+        if (!data) return null;
 
         console.log("Converted data:", data);
 
         // Extract and format all fields
         return {
-            _id: data._id || '',
+            id: data.id || '',
             name: data.name || 'Product Name',
             slug: data.slug || '',
             description: data.description || 'No description available',
@@ -123,14 +92,10 @@ function ProductDetail({ productSlug: propSlug }) {
         const fetchProduct = async () => {
             try {
                 const res = await ProductService.getProductBySlug(productSlug);
-                const rawData = res.data || res;
+                const data = res.data || res;
+                console.log("=== RAW DATA FROM API ===", data);
 
-                console.log("=== RAW DATA FROM API ===");
-                console.log(rawData);
-                console.log("=========================");
-
-                const parsedProduct = parseProductData(rawData);
-
+                const parsedProduct = parseProductData(data);
                 console.log("=== PARSED PRODUCT ===");
                 console.log(parsedProduct);
                 console.log("======================");
@@ -169,8 +134,42 @@ function ProductDetail({ productSlug: propSlug }) {
     };
 
     const handleAddToCart = () => {
-        alert(`Đã thêm ${quantity} sản phẩm "${product.name}" vào giỏ hàng!`);
+        const cartItem = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images?.[0] || '',
+            quantity: quantity, // ✅ lấy đúng số lượng người chọn
+            variant: selectedVariant ? {
+                size: selectedVariant.size || null,
+                color: selectedVariant.color || null
+            } : null
+        };
+
+        const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        // ✅ So sánh theo id + size + color
+        const existingItemIndex = existingCart.findIndex(item =>
+            item.id === cartItem.id &&
+            (item.variant?.size === cartItem.variant?.size) &&
+            (item.variant?.color === cartItem.variant?.color)
+        );
+
+        if (existingItemIndex !== -1) {
+            // ✅ tăng đúng số lượng đã chọn, không phải +1 cứng
+            existingCart[existingItemIndex].quantity += cartItem.quantity;
+        } else {
+            existingCart.push(cartItem);
+        }
+
+        localStorage.setItem('cart', JSON.stringify(existingCart));
+
+        alert("✅ Added to cart!");
     };
+
+
+
+
 
     if (!product) {
         return (
@@ -182,7 +181,7 @@ function ProductDetail({ productSlug: propSlug }) {
 
     const images = product.images || [];
     const currentStock = selectedVariant?.stock || product.stock || 0;
-    const displayImages = images.length > 0 ? images : ['https://via.placeholder.com/600x600?text=No+Image'];
+    const displayImages = images.length > 0 ? images : ['https://placehold.co/600x600?text=No+Image'];
 
     return (
         <div className="min-h-screen bg-white">
@@ -220,7 +219,10 @@ function ProductDetail({ productSlug: propSlug }) {
                                             alt={`Thumbnail ${idx + 1}`}
                                             className="object-cover w-full h-full"
                                             onError={(e) => {
-                                                e.target.src = 'https://via.placeholder.com/600x600?text=Error';
+                                                if (!e.target.dataset.fallback) {
+                                                    e.target.dataset.fallback = true;
+                                                    e.target.src = 'https://placehold.co/600x600?text=No+Image';
+                                                }
                                             }}
                                         />
                                     </button>
@@ -236,7 +238,10 @@ function ProductDetail({ productSlug: propSlug }) {
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/600x600?text=No+Image';
+                                        if (!e.target.dataset.fallback) {
+                                            e.target.dataset.fallback = true;
+                                            e.target.src = 'https://placehold.co/600x600?text=No+Image';
+                                        }
                                     }}
                                 />
                                 {product.on_sale && product.discount_percentage > 0 && (

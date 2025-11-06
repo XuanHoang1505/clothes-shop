@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Repositories\Eloquent\DiscountRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\UserRepository;
+use App\Repositories\Interfaces\DiscountRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Services\Implementations\DiscountService;
 use App\Services\Implementations\ProductService;
 use App\Services\Implementations\UserService;
+use App\Services\Interfaces\DiscountServiceInterface;
 use App\Services\Interfaces\ProductServiceInterface;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Services\OtpService;
@@ -27,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
+            DiscountServiceInterface::class,
+            DiscountService::class
+        );
+
+        $this->app->bind(
             UserServiceInterface::class,
             UserService::class
         );
@@ -35,6 +44,12 @@ class AppServiceProvider extends ServiceProvider
             ProductRepositoryInterface::class,
             ProductRepository::class
         );
+
+        $this->app->bind(
+            DiscountRepositoryInterface::class,
+            DiscountRepository::class
+        );
+
 
         $this->app->bind(
             UserRepositoryInterface::class, 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Product\CreateProductRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
+use App\Http\Resources\ProductResource;
 use App\Services\Interfaces\ProductServiceInterface;
 use Illuminate\Http\Request;
 
