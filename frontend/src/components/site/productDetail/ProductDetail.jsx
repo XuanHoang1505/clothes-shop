@@ -220,7 +220,8 @@ function ProductDetail({ productSlug: propSlug }) {
                                             alt={`Thumbnail ${idx + 1}`}
                                             className="object-cover w-full h-full"
                                             onError={(e) => {
-                                                e.target.src = 'https://via.placeholder.com/600x600?text=Error';
+                                                e.target.onerror = null;
+                                                e.target.src = 'https://placehold.co/600x600?text=No+Image';
                                             }}
                                         />
                                     </button>
@@ -236,7 +237,8 @@ function ProductDetail({ productSlug: propSlug }) {
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/600x600?text=No+Image';
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://placehold.co/600x600?text=No+Image';
                                     }}
                                 />
                                 {product.on_sale && product.discount_percentage > 0 && (

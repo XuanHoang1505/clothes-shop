@@ -7,9 +7,9 @@ use App\Repositories\Interfaces\ProductRepositoryInterface;
 
 class ProductRepository implements ProductRepositoryInterface
 {
-    public function getAll(int $perPage = 15)
+    public function getAll(int $page = 1, int $perPage = 15)
     {
-        return Product::paginate($perPage);
+        return Product::paginate($perPage, ['*'], 'page', $page);
     }
 
     public function findById(string $id)
@@ -44,63 +44,36 @@ class ProductRepository implements ProductRepositoryInterface
             ->paginate($perPage);
     }
 
-    public function filter(array $filters, int $perPage = 15)
+    public function filter(array $filters,int $current, int $perPage = 9)
     {
         $query = Product::where('is_active', true);
 
-        if (isset($filters['category_slug'])) {
-            $query->where('category.slug', $filters['category_slug']);
+        if (isset($filters['categories'])) {
+            $query->whereIn('category.slug', $filters['categories']);
         }
 
-        if (isset($filters['category_name'])) {
-            $query->where('category.name', $filters['category_name']);
+        if (isset($filters['minPrice']) || isset($filters['maxPrice'])) {
+            $minPrice = $filters['minPrice'] ?? 0;
+            $maxPrice = $filters['maxPrice'] ?? PHP_INT_MAX;
+            $query->whereBetween('price', [$minPrice, $maxPrice]);
         }
 
-        if (isset($filters['parent_category'])) {
-            $query->where('category.parent', $filters['parent_category']);
+        if (isset($filters['colors'])) {
+            $query->whereIn('variants.color', $filters['colors']);
         }
 
-        if (isset($filters['brand_slug'])) {
-            $query->where('brand.slug', $filters['brand_slug']);
+        if(isset($filters['sizes'])) {
+            $query->whereIn('variants.size', $filters['sizes']);
         }
 
-        if (isset($filters['min_price'])) {
-            $query->where('price', '>=', $filters['min_price']);
+        if(isset($filters['dressStyle'])) {
+            $query->whereIn('dressStyle', $filters['dressStyle']);
         }
 
-        if (isset($filters['max_price'])) {
-            $query->where('price', '<=', $filters['max_price']);
-        }
-
-        if (isset($filters['is_new']) && $filters['is_new']) {
-            $query->where('is_new', true);
-        }
-
-        if (isset($filters['is_bestseller']) && $filters['is_bestseller']) {
-            $query->where('is_bestseller', true);
-        }
-
-        if (isset($filters['is_featured']) && $filters['is_featured']) {
-            $query->where('is_featured', true);
-        }
-
-        if (isset($filters['search'])) {
-            $searchTerm = $filters['search'];
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('name', 'regex', "/$searchTerm/i")
-                  ->orWhere('description', 'regex', "/$searchTerm/i")
-                  ->orWhere('tags', 'regex', "/$searchTerm/i");
-            });
-        }
-
-        $sortBy = $filters['sort_by'] ?? 'created_at';
-        $sortOrder = $filters['sort_order'] ?? 'desc';
-        $query->orderBy($sortBy, $sortOrder);
-
-        return $query->paginate($perPage);
+        return $query->paginate($perPage, ['*'], 'page', $current);
     }
 
-    public function getFeatured(int $limit = 10)
+    public function getFeatured(int $limit = 4)
     {
         return Product::where('is_featured', true)
             ->where('is_active', true)

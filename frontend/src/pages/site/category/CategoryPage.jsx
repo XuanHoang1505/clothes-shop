@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
 import { Slider, Drawer, Spin, Rate, Pagination, message } from "antd";
-import { SlidersHorizontal, ChevronRight, X } from "lucide-react";
+import { SlidersHorizontal, ChevronRight, ShoppingCart } from "lucide-react";
 import ProductService from "@/services/site/ProductService";
-import { formatNumber } from "@/utils/Formatter";
-import { Link } from "react-router-dom";
 
 function CategoryPage() {
-  const categorySlug = "formal"; // Lấy từ tham số URL hoặc props trong thực tế
-  const [priceRange, setPriceRange] = useState([50, 200]);
-  const [selectedSize, setSelectedSize] = useState("Large");
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,8 +12,23 @@ function CategoryPage() {
     pageSize: 9,
     total: 0,
   });
+  const [filters, setFilters] = useState({
+    categories: [],
+    priceRange: [0, 2000000],
+    colors: [],
+    sizes: [],
+    dressStyles: [],
+  });
 
-  const categoryList = ["T-shirts", "Shorts", "Shirts", "Hoodie", "Jeans"];
+  const [sortBy, setSortBy] = useState("popular");
+
+  const categoryList = [
+    { name: "T-shirts", slug: "t-shirts" },
+    { name: "Shorts", slug: "shorts" },
+    { name: "Shirts", slug: "shirts" },
+    { name: "Hoodie", slug: "hoodie" },
+    { name: "Jeans", slug: "jeans" },
+  ];
   const colorList = [
     { name: "green", hex: "#10B981" },
     { name: "red", hex: "#EF4444" },
@@ -46,36 +56,15 @@ function CategoryPage() {
 
   const dressStyleList = ["Casual", "Formal", "Party", "Gym"];
 
-  // const products = [
-  //   {
-  //     id: 1,
-  //     name: "Gradient Graphic T-shirt",
-  //     price: 145,
-  //     originalPrice: null,
-  //     discount: null,
-  //     rating: 3.5,
-  //     image:
-  //       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=300&h=300&fit=crop",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Polo with Tipping Details",
-  //     price: 180,
-  //     originalPrice: 242,
-  //     discount: "-20%",
-  //     rating: 4.5,
-  //     image:
-  //       "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=300&h=300&fit=crop",
-  //   }
-  // ];
-
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const result = await ProductService.getProductsByCategory(
-        categorySlug,
+      const result = await ProductService.getProducts(
         pagination.current,
-        pagination.pageSize
+        pagination.pageSize,
+        {
+          ...filters,
+        }
       );
 
       setProducts(result.data || []);
@@ -91,9 +80,37 @@ function CategoryPage() {
     }
   };
 
+  const filtersProduct = async () => {
+    setLoading(true);
+
+    try {
+      const transformedFilters = {
+        ...filters,
+        maxPrice: filters.priceRange[1],
+        minPrice: filters.priceRange[0],
+        priceRange: undefined,
+      };
+      const result = await ProductService.filtersProduct(
+        pagination.current,
+        pagination.pageSize,
+        transformedFilters
+      );
+      setProducts(result.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: result.total || 0,
+      }));
+    } catch (error) {
+      message.error("Không thể tải sản phẩm. Vui lòng thử lại!");
+      console.error("Lỗi khi lọc sản phẩm:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
-  }, [categorySlug, pagination.current, pagination.pageSize]);
+  }, [pagination.current, pagination.pageSize]);
 
   const handlePaginationChange = (page, pageSize) => {
     setPagination((prev) => ({
@@ -101,8 +118,6 @@ function CategoryPage() {
       current: page,
       pageSize: pageSize,
     }));
-
-    // Scroll to top khi đổi trang
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -112,21 +127,89 @@ function CategoryPage() {
     return `-${Math.round(discount)}%`;
   };
 
+  const toggleFilter = (filterType, value) => {
+    setFilters((prev) => {
+      const currentValues = prev[filterType];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter((v) => v !== value)
+        : [...currentValues, value];
+
+      return {
+        ...prev,
+        [filterType]: newValues,
+      };
+    });
+  };
+
+  const handlePriceChange = (value) => {
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: value,
+    }));
+  };
+
+  const applyFilters = () => {
+    setPagination((prev) => ({ ...prev, current: 1 }));
+    setDrawerVisible(false);
+    filtersProduct();
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      categories: [],
+      priceRange: [0, 2000000],
+      colors: [],
+      sizes: [],
+      dressStyles: [],
+    });
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
+  const formatNumber = (num) => {
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(num);
+  };
+
   const FilterContent = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center pb-4 border-b">
         <h2 className="text-xl font-bold">Filters</h2>
-        <SlidersHorizontal className="w-5 h-5 text-gray-600" />
+        <button
+          onClick={clearFilters}
+          className="text-sm text-gray-600 hover:text-black"
+        >
+          Clear All
+        </button>
       </div>
 
       {/* Categories */}
       <div className="border-b pb-4">
+        <h3 className="font-bold text-lg mb-3">Categories</h3>
         {categoryList.map((category, index) => (
           <div
             key={index}
+            onClick={() => toggleFilter("categories", category.slug)}
             className="flex justify-between items-center py-3 cursor-pointer hover:text-black transition-colors"
           >
-            <span className="text-gray-600">{category}</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={filters.categories.includes(category.slug)}
+                onChange={() => {}}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <span
+                className={
+                  filters.categories.includes(category.slug)
+                    ? "text-black font-medium"
+                    : "text-gray-600"
+                }
+              >
+                {category.name}
+              </span>
+            </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
         ))}
@@ -138,18 +221,18 @@ function CategoryPage() {
         <Slider
           range
           min={0}
-          max={500}
-          step={10}
-          value={priceRange}
-          onChange={setPriceRange}
+          max={2000000}
+          step={10000}
+          value={filters.priceRange}
+          onChange={handlePriceChange}
           styles={{
             track: { backgroundColor: "black" },
             tracks: { backgroundColor: "black" },
           }}
         />
         <div className="flex justify-between mt-3 text-sm font-semibold">
-          <span>${priceRange[0]}</span>
-          <span>${priceRange[1]}</span>
+          <span>{formatNumber(filters.priceRange[0])}</span>
+          <span>{formatNumber(filters.priceRange[1])}</span>
         </div>
       </div>
 
@@ -160,13 +243,30 @@ function CategoryPage() {
           {colorList.map((color, index) => (
             <button
               key={index}
-              className="w-9 h-9 rounded-full border-2 border-gray-200 hover:scale-110 transition-transform cursor-pointer"
+              onClick={() => toggleFilter("colors", color.name)}
+              className={`w-9 h-9 rounded-full border-2 hover:scale-110 transition-transform cursor-pointer relative ${
+                filters.colors.includes(color.name)
+                  ? "ring-2 ring-black ring-offset-2"
+                  : ""
+              }`}
               style={{
                 backgroundColor: color.hex,
                 borderColor: color.hex === "#FFFFFF" ? "#e5e7eb" : color.hex,
               }}
               aria-label={color.name}
-            />
+            >
+              {filters.colors.includes(color.name) && (
+                <span
+                  className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${
+                    color.hex === "#FFFFFF" || color.hex === "#FCD34D"
+                      ? "text-black"
+                      : "text-white"
+                  }`}
+                >
+                  ✓
+                </span>
+              )}
+            </button>
           ))}
         </div>
       </div>
@@ -178,11 +278,12 @@ function CategoryPage() {
           {sizeList.map((size, index) => (
             <button
               key={index}
-              onClick={() => setSelectedSize(size)}
-              className={`px-4 py-2 rounded-full text-sm transition-colors ${selectedSize === size
-                ? "bg-black text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
+              onClick={() => toggleFilter("sizes", size)}
+              className={`px-4 py-2 rounded-full text-sm transition-colors ${
+                filters.sizes.includes(size)
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
               {size}
             </button>
@@ -196,16 +297,36 @@ function CategoryPage() {
         {dressStyleList.map((style, index) => (
           <div
             key={index}
+            onClick={() => toggleFilter("dressStyles", style)}
             className="flex justify-between items-center py-3 cursor-pointer hover:text-black transition-colors"
           >
-            <span className="text-gray-600">{style}</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={filters.dressStyles.includes(style)}
+                onChange={() => {}}
+                className="w-4 h-4 cursor-pointer"
+              />
+              <span
+                className={
+                  filters.dressStyles.includes(style)
+                    ? "text-black font-medium"
+                    : "text-gray-600"
+                }
+              >
+                {style}
+              </span>
+            </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
           </div>
         ))}
       </div>
 
       {/* Apply Filter Button */}
-      <button className="w-full bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors">
+      <button
+        onClick={applyFilters}
+        className="w-full bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors"
+      >
         Apply Filter
       </button>
     </div>
@@ -226,10 +347,14 @@ function CategoryPage() {
           <main className="flex-1">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-bold">Casual</h1>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 ms-auto">
                 <span className="text-gray-600 text-sm hidden sm:inline">
-                  Showing 1-10 of 100 Products
+                  Showing {(pagination.current - 1) * pagination.pageSize + 1}-
+                  {Math.min(
+                    pagination.current * pagination.pageSize,
+                    pagination.total
+                  )}{" "}
+                  of {pagination.total} Products
                 </span>
                 <button
                   className="lg:hidden p-2 border rounded-full hover:bg-gray-50"
@@ -237,60 +362,127 @@ function CategoryPage() {
                 >
                   <SlidersHorizontal className="w-5 h-5" />
                 </button>
-                <select className="border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black hidden md:block">
-                  <option>Most Popular</option>
-                  <option>Newest</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="border rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black hidden md:block"
+                >
+                  <option value="popular">Most Popular</option>
+                  <option value="newest">Newest</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
                 </select>
               </div>
             </div>
+
+            {/* Active Filters Display */}
+            {(filters.categories.length > 0 ||
+              filters.colors.length > 0 ||
+              filters.sizes.length > 0 ||
+              filters.dressStyles.length > 0) && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {filters.categories.map((cat) => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                  >
+                    {cat}
+                    <button
+                      onClick={() => toggleFilter("categories", cat)}
+                      className="hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {filters.colors.map((color) => (
+                  <span
+                    key={color}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                  >
+                    {color}
+                    <button
+                      onClick={() => toggleFilter("colors", color)}
+                      className="hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {filters.sizes.map((size) => (
+                  <span
+                    key={size}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                  >
+                    {size}
+                    <button
+                      onClick={() => toggleFilter("sizes", size)}
+                      className="hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {filters.dressStyles.map((style) => (
+                  <span
+                    key={style}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                  >
+                    {style}
+                    <button
+                      onClick={() => toggleFilter("dressStyles", style)}
+                      className="hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Products Grid */}
             <Spin spinning={loading}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map((product) => (
-                  <Link
+                  <div
                     key={product.id}
-                    to={`/product/${product.slug}`}
-                    className="group cursor-pointer block text-inherit no-underline"
+                    className="group cursor-pointer"
+                    onClick={() =>
+                      (window.location.href = `/product/${product.slug}`)
+                    }
                   >
-                    <div key={product.id} className="group cursor-pointer">
-                      <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <h3 className="font-bold text-lg mb-2">{product.name}</h3>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Rate
-                          disabled
-                          defaultValue={5}
-                          className="text-sm"
-                        />
-                        <span className="text-sm text-gray-600">
-                          5/5
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xl">
-                          {formatNumber(product.price)}
-                        </span>
-                        {product.compare_price && (
-                          <>
-                            <span className="text-gray-400 line-through">
-                              ${product.compare_price}
-                            </span>
-                            <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                              {calculateDiscount(product.compare_price, product.price)}
-                            </span>
-                          </>
-                        )}
-                      </div>
+                    <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
+                      <img
+                        src={product.images[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                  </Link>
+                    <h3 className="font-bold text-lg mb-2">{product.name}</h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Rate disabled defaultValue={5} className="text-sm" />
+                      <span className="text-sm text-gray-600">5/5</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xl">
+                        {formatNumber(product.price)}
+                      </span>
+                      {product.compare_price && (
+                        <>
+                          <span className="text-gray-400 line-through">
+                            {formatNumber(product.compare_price)}
+                          </span>
+                          <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
+                            {calculateDiscount(
+                              product.compare_price,
+                              product.price
+                            )}
+                          </span>
+                        </>
+                      )}
+                      <ShoppingCart className="ms-auto" />
+                    </div>
+                  </div>
                 ))}
               </div>
 
