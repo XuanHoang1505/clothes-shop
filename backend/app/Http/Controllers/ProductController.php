@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Product\CreateProductRequest;
+use App\Http\Requests\Product\FiltersRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Services\Interfaces\ProductServiceInterface;
@@ -24,51 +25,20 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $page = $request->input('current', 1);
+        $pageSize = $request->input('pageSize', 9);
+        $result = $this->productService->getAllProducts($page, $pageSize);
+
+        return response()->json($result);
+    }
+
+    public function filters(FiltersRequest $request)
+    {
+        $requestData = $request->validated();
+        $page = $request->input('current', 1);
         $pageSize = $request->input('pageSize', 15);
-
-        // Nếu có category trong query
-        if ($request->has('category')) {
-            $result = $this->productService->getProductsByCategory(
-                $request->input('category'),
-                $page,
-                $pageSize
-            );
-            return response()->json($result);
-        }
-
-        // Nếu có search keyword
-        if ($request->has('search')) {
-            $result = $this->productService->searchProducts(
-                $request->input('search'),
-                $page,
-                $pageSize
-            );
-            return response()->json($result);
-        }
-
-        // Filter với nhiều điều kiện
-        $filters = $request->only([
-            'category_slug',
-            'category_name',
-            'parent_category',
-            'brand_slug',
-            'min_price',
-            'max_price',
-            'is_new',
-            'is_bestseller',
-            'is_featured',
-            'sort_by',
-            'sort_order'
-        ]);
-
-        // Nếu không có filter gì, lấy tất cả
-        if (empty(array_filter($filters))) {
-            $result = $this->productService->getAllProducts($page, $pageSize);
-            return response()->json($result);
-        }
-
-        // Có filter
-        $result = $this->productService->filterProducts($filters, $page, $pageSize);
+        
+        $result = $this->productService->filterProducts($requestData, $page, $pageSize);
+        
         return response()->json($result);
     }
 

@@ -4,13 +4,13 @@ namespace App\Repositories\Interfaces;
 
 interface ProductRepositoryInterface
 {
-    public function getAll(int $perPage = 15);
+    public function getAll(int $page = 1, int $perPage = 9);
     public function findById(string $id);
     public function findBySlug(string $slug);
     public function findByCategorySlug(string $categorySlug, int $page, int $perPage = 15);
     public function findByCategoryName(string $categoryName, int $perPage = 15);
     public function findByParentCategory(string $parentName, int $perPage = 15);
-    public function filter(array $filters, int $perPage = 15);
+    public function filter(array $filters,int $current, int $perPage = 15);
     public function getFeatured(int $limit = 10);
     public function getNew(int $limit = 10);
     public function getBestseller(int $limit = 10);

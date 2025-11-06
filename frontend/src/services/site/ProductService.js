@@ -5,15 +5,21 @@ import handleErrorResponse from "../../utils/errors/ErrorHandler";
 const API_URL = "/products";
 
 // 🧩 Lấy tất cả sản phẩm
-const getProducts = async () => {
+const getProducts = async (current = 1,  pageSize = 9 ) => {
   try {
-    const response = await axiosInstance.get(API_URL);
+    const response = await axiosInstance.get(API_URL, {
+      params: {
+        current: current,
+        pageSize: pageSize,
+      }
+    });
     return response.data;
   } catch (error) {
     handleErrorResponse(error);
     throw error;
   }
 };
+
 
 // 🔍 Lấy sản phẩm theo ID
 const getProductById = async (id) => {
@@ -49,6 +55,25 @@ const getProductsByCategory = async (categorySlug, page = 1, pageSize = 9) => {
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi lấy sản phẩm theo danh mục: ${categorySlug}`, error);
+    throw error;
+  }
+};
+
+//Filter products
+const filtersProduct = async (current = 1,  pageSize = 9, filters= {} ) => {
+  console.log(filters);
+  
+  try {
+    const response = await axiosInstance.get(`${API_URL}/filters`, {
+      params: {
+        current: current,
+        pageSize: pageSize,
+        ...filters
+      }
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
     throw error;
   }
 };
@@ -94,6 +119,7 @@ const ProductService = {
   getProductById,
   getProductBySlug,
   getProductsByCategory,
+  filtersProduct,
   createProduct,
   updateProduct,
   deleteProduct,
