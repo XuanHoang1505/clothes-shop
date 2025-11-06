@@ -17,7 +17,7 @@ class ProductService implements ProductServiceInterface
     public function getAllProducts(int $page = 1, int $pageSize = 15): array
     {
         try {
-            $products = $this->productRepository->getAll($pageSize);
+            $products = $this->productRepository->getAll($page, $pageSize);
 
             return [
                 'success' => true,
@@ -110,7 +110,7 @@ class ProductService implements ProductServiceInterface
     public function filterProducts(array $filters, int $page = 1, int $pageSize = 15): array
     {
         try {
-            $products = $this->productRepository->filter($filters, $pageSize);
+            $products = $this->productRepository->filter($filters, $page, $pageSize );
 
             return [
                 'success' => true,
