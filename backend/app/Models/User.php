@@ -13,10 +13,15 @@ class User extends Model implements JWTSubject
     protected $collection = 'users';
 
     protected $fillable = [
-        'name',
         'email',
         'password',
+        'fullName',
+        'status',
         'role',
+        'phoneNumber',
+        'gender',
+        'avatar',
+        'isVerified',
     ];
 
     protected $hidden = [

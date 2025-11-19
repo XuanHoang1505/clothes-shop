@@ -22,12 +22,17 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = $this->userService->register($request->validated());
+        $result = $this->userService->register($request->validated());
 
-        return response()->json([
-            'message' => 'Đăng ký thành công!',
-            'data'    => new UserResource($user),
-        ], 201);
+        return response()->json($result, 201);
+    }
+
+    public function verifyEmailOtp(VerifyOtpRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $result = $this->userService->verifyResetPasswordOtp($data['email'], $data['otp']);
+
+        return response()->json($result, $result['success'] ? 200 : 400);
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -63,10 +68,10 @@ class AuthController extends Controller
         return response()->json($result, $result['success'] ? 200 : 400);
     }
 
-    public function verifyOtp(VerifyOtpRequest $request): JsonResponse
+    public function verifyResetPasswordOtp(VerifyOtpRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $result = $this->userService->verifyOtp($data['email'], $data['otp']);
+        $result = $this->userService->verifyResetPasswordOtp($data['email'], $data['otp']);
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }

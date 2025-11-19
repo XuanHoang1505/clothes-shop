@@ -113,6 +113,25 @@ const deleteProduct = async (id) => {
   }
 };
 
+const getCategories = async () => {
+  try {
+    const response = await axiosInstance.get('/categories');
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    throw error;
+  }
+}
+
+const getDressStyles = async () => {
+  try {
+    const response = await axiosInstance.get('/dress-styles');
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    throw error;
+  } 
+};
 
 const ProductService = {
   getProducts,
@@ -123,6 +142,8 @@ const ProductService = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getCategories,
+  getDressStyles
 };
 
 export default ProductService;

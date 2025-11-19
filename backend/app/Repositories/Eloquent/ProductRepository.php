@@ -66,8 +66,8 @@ class ProductRepository implements ProductRepositoryInterface
             $query->whereIn('variants.size', $filters['sizes']);
         }
 
-        if(isset($filters['dressStyle'])) {
-            $query->whereIn('dressStyle', $filters['dressStyle']);
+        if(isset($filters['dressStyles'])) {
+            $query->whereIn('dressStyle.slug', $filters['dressStyles']);
         }
 
         return $query->paginate($perPage, ['*'], 'page', $current);
@@ -102,6 +102,13 @@ class ProductRepository implements ProductRepositoryInterface
     {
         return Product::raw(function($collection) {
             return $collection->distinct('category');
+        });
+    }
+
+    public function getAllDressStyles()
+    {
+        return Product::raw(function($collection) {
+            return $collection->distinct('dressStyle');
         });
     }
 

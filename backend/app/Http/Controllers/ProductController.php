@@ -133,6 +133,13 @@ class ProductController extends Controller
         return response()->json($result);
     }
 
+    public function dressStyles()
+    {
+        $result = $this->productService->getAllDressStyles();
+        
+        return response()->json($result);
+    }
+
     public function brands()
     {
         $result = $this->productService->getAllBrands();
