@@ -1,58 +1,146 @@
-import React, { useState } from 'react';
-import { ShoppingCart, User, X, Minus, Plus, Tag, ArrowRight, Mail, Twitter, Facebook, Instagram, Github } from 'lucide-react';
-import Header from '@/components/site/header/Header';
-import { Footer } from 'antd/es/layout/layout';
+import React, { useState, useEffect } from 'react';
+import { X, Minus, Plus, Tag, ArrowRight, Mail, MapPin } from 'lucide-react';
+import { formatNumber } from "@/utils/Formatter";
+import DiscountService from '@/services/site/DiscountService';
+import AddressService from '@/services/site/AddressService';
 
-export default function ShoppingCartPage() {
-    const [cartItems, setCartItems] = useState([
-        {
-            id: 1,
-            name: 'Gradient Graphic T-shirt',
-            size: 'Large',
-            color: 'White',
-            price: 145,
-            quantity: 1,
-            image: '/api/placeholder/80/80'
-        },
-        {
-            id: 2,
-            name: 'Checkered Shirt',
-            size: 'Medium',
-            color: 'Red',
-            price: 180,
-            quantity: 1,
-            image: '/api/placeholder/80/80'
-        },
-        {
-            id: 3,
-            name: 'Skinny Fit Jeans',
-            size: 'Large',
-            color: 'Blue',
-            price: 240,
-            quantity: 1,
-            image: '/api/placeholder/80/80'
-        }
-    ]);
-
+function Cart() {
+    const [cartItems, setCartItems] = useState([])
     const [promoCode, setPromoCode] = useState('');
     const [email, setEmail] = useState('');
+    const [discount, setDiscount] = useState(0);
+    const [appliedDiscount, setAppliedDiscount] = useState(null);
 
-    const updateQuantity = (id, delta) => {
-        setCartItems(items =>
-            items.map(item =>
-                item.id === id
-                    ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-                    : item
-            )
-        );
+
+    // Address states
+    const [provinces, setProvinces] = useState([]);
+    const [wards, setWards] = useState([]);
+    const [selectedProvince, setSelectedProvince] = useState('');
+    const [selectedWard, setSelectedWard] = useState('');
+    const [isLoadingWards, setIsLoadingWards] = useState(false);
+    const [houseNumber, setHouseNumber] = useState("");
+
+
+    // Lấy danh sách tỉnh khi load
+    useEffect(() => {
+        AddressService.getProvinces().then((data) => {
+
+            if (data) setProvinces(data);
+        });
+    }, []);
+
+
+
+    useEffect(() => {
+        if (!selectedProvince) return;
+        AddressService.getWards(selectedProvince).then((data) => {
+            setWards(data);
+        });
+    }, [selectedProvince]);
+
+
+
+
+    const getCart = () => {
+        const cart = JSON.parse(localStorage.getItem('cart'));
+        return cart || []; // nếu null thì trả về mảng rỗng
     };
+
+
+    useEffect(() => {
+        const cart = getCart();
+        setCartItems(cart);
+    }, []); // chạy 1 lần khi component load
+
+
+    const updateQuantity = (id, delta, variant) => {
+        setCartItems(prevItems => {
+            const newCart = prevItems.map(item => {
+                const sameVariant =
+                    (item.variant?.size === variant?.size) &&
+                    (item.variant?.color === variant?.color);
+
+                if (item.id === id && sameVariant) {
+                    return { ...item, quantity: Math.max(1, item.quantity + delta) };
+                }
+
+                return item;
+            });
+
+            localStorage.setItem('cart', JSON.stringify(newCart));
+            return newCart;
+        });
+    };
+
 
     const removeItem = (id) => {
-        setCartItems(items => items.filter(item => item.id !== id));
+        setCartItems(items => {
+            const updated = items.filter(item => item.id !== id);
+
+            // Cập nhật lại localStorage
+            localStorage.setItem("cart", JSON.stringify(updated));
+
+            return updated;
+        });
     };
 
+
+    const handleApplyPromo = async () => {
+        const code = promoCode.trim().toUpperCase();
+        if (!code) {
+            alert("Vui lòng nhập mã giảm giá!");
+            return;
+        }
+
+        try {
+            // Gọi API lấy thông tin mã giảm giá
+            const res = await DiscountService.getDiscountByCode(code);
+
+            // Nếu API trả về dạng resource Laravel: { data: {...} }
+            const discountData = res.data ?? res;
+
+            // Kiểm tra trạng thái mã
+            if (!discountData.is_active) {
+                alert("Mã giảm giá đã hết hạn hoặc không còn hiệu lực!");
+                return;
+            }
+
+            // Kiểm tra giá trị đơn hàng tối thiểu
+            if (subtotal < discountData.min_order_value) {
+                alert(
+                    `Đơn hàng tối thiểu ${discountData.min_order_value.toLocaleString()} đ mới được áp dụng mã này.`
+                );
+                return;
+            }
+
+            let discountAmount = 0;
+
+            // Tính giảm
+            if (discountData.type === "percent") {
+                discountAmount = (subtotal * discountData.value) / 100;
+            } else if (discountData.type === "fixed") {
+                discountAmount = discountData.value;
+            }
+
+            // Giới hạn giảm tối đa
+            discountAmount = Math.min(discountAmount, discountData.max_discount);
+
+            setDiscount(discountAmount);
+            setAppliedDiscount(discountData);
+
+            alert(`Áp dụng mã thành công! Giảm ${discountAmount.toLocaleString()} đ`);
+
+        } catch (error) {
+            alert("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
+            console.error(error);
+        }
+    };
+
+
+    // Kiểm tra địa chỉ đã đầy đủ chưa
+    const isAddressComplete = houseNumber.trim() && selectedProvince && selectedWard;
+
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const discount = subtotal * 0.2;
     const deliveryFee = 15;
     const total = subtotal - discount + deliveryFee;
 
@@ -66,7 +154,12 @@ export default function ShoppingCartPage() {
                 </button>
             </div>
 
-            <Header />
+            {/* Header */}
+            <div className="border-b">
+                <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+                    <h1 className="text-2xl font-bold">SHOP.CO</h1>
+                </div>
+            </div>
 
             {/* Breadcrumb */}
             <div className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-600">
@@ -78,46 +171,151 @@ export default function ShoppingCartPage() {
                 <h2 className="text-3xl font-bold mb-8">YOUR CART</h2>
 
                 <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Cart Items */}
-                    <div className="lg:col-span-2 space-y-4">
-                        {cartItems.map(item => (
-                            <div key={item.id} className="border rounded-lg p-4 flex gap-4">
-                                <div className="w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0"></div>
-                                <div className="flex-1">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 className="font-semibold text-lg">{item.name}</h3>
-                                            <p className="text-sm text-gray-600">Size: {item.size}</p>
-                                            <p className="text-sm text-gray-600">Color: {item.color}</p>
+                    {/* Cart Items & Address */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {/* Cart Items List */}
+                        <div className="space-y-4">
+                            {cartItems.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500 border rounded-lg">
+                                    Giỏ hàng của bạn đang trống
+                                </div>
+                            ) : (
+                                cartItems.map((item, index) => (
+                                    <div key={`${item.id}-${index}`} className="border rounded-lg p-4 flex gap-4">
+                                        <div className="w-24 h-24 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                                            {item.image && (
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            )}
                                         </div>
-                                        <button
-                                            onClick={() => removeItem(item.id)}
-                                            className="text-red-500 hover:text-red-700"
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="font-semibold text-lg">{item.name}</h3>
+                                                    <p className="text-sm text-gray-600">Size: {item.size || 'N/A'}</p>
+                                                    <p className="text-sm text-gray-600">Color: {item.color || 'N/A'}</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => removeItem(item.id, item.variant)}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <X size={20} />
+                                                </button>
+                                            </div>
+                                            <div className="flex justify-between items-center mt-4">
+                                                <p className="text-xl font-bold">{formatNumber(item.price * item.quantity)} đ</p>
+                                                <div className="flex items-center gap-4 bg-gray-100 rounded-full px-4 py-2">
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, -1, item.variant)}
+                                                        className="hover:text-gray-600"
+                                                    >
+                                                        <Minus size={16} />
+                                                    </button>
+                                                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, 1, item.variant)}
+                                                        className="hover:text-gray-600"
+                                                    >
+                                                        <Plus size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Shipping Address */}
+                        {cartItems.length > 0 && (
+                            <div className="border rounded-lg p-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <MapPin size={20} className="text-gray-700" />
+                                    <h3 className="text-xl font-bold">Địa Chỉ Giao Hàng</h3>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {/* House Number */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Số nhà, tên đường <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={houseNumber}
+                                            onChange={(e) => setHouseNumber(e.target.value)}
+                                            placeholder="Ví dụ: 123 Nguyễn Trãi"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    {/* Province */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Tỉnh/Thành phố <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            value={selectedProvince}
+                                            onChange={(e) => setSelectedProvince(e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                         >
-                                            <X size={20} />
-                                        </button>
+                                            <option value="">Chọn Tỉnh/Thành phố</option>
+                                            {provinces.map((province) => (
+                                                <option key={province.code} value={province.code}>
+                                                    {province.name}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                    <div className="flex justify-between items-center mt-4">
-                                        <p className="text-xl font-bold">${item.price}</p>
-                                        <div className="flex items-center gap-4 bg-gray-100 rounded-full px-4 py-2">
-                                            <button
-                                                onClick={() => updateQuantity(item.id, -1)}
-                                                className="hover:text-gray-600"
-                                            >
-                                                <Minus size={16} />
-                                            </button>
-                                            <span className="w-8 text-center font-medium">{item.quantity}</span>
-                                            <button
-                                                onClick={() => updateQuantity(item.id, 1)}
-                                                className="hover:text-gray-600"
-                                            >
-                                                <Plus size={16} />
-                                            </button>
+
+                                    {/* Ward */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Phường/Xã <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            value={selectedWard}
+                                            onChange={(e) => setSelectedWard(e.target.value)}
+                                            disabled={!selectedProvince || isLoadingWards}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">
+                                                {isLoadingWards ? "Đang tải..." : "Chọn Phường/Xã"}
+                                            </option>
+
+                                            {wards.map((ward) => (
+                                                <option key={ward.code} value={ward.code}>
+                                                    {ward.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        {selectedProvince && wards.length > 0 && (
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                Tìm thấy {wards.length} phường/xã
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Warning if address incomplete */}
+                                    {!isAddressComplete && (
+                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
+                                            <span className="text-yellow-600 text-sm">
+                                                ⚠️ Vui lòng nhập đầy đủ địa chỉ để tính phí giao hàng
+                                            </span>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {/* Success message when address is complete */}
+                                    {isAddressComplete && (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
+                                            <span className="text-green-600 text-sm">
+                                                ✓ Địa chỉ đã được xác nhận. Phí giao hàng đã được thêm vào đơn hàng.
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                        )}
                     </div>
 
                     {/* Order Summary */}
@@ -128,19 +326,27 @@ export default function ShoppingCartPage() {
                             <div className="space-y-4 mb-6">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Subtotal</span>
-                                    <span className="font-semibold">${subtotal}</span>
+                                    <span className="font-semibold">{formatNumber(subtotal)} đ</span>
                                 </div>
-                                <div className="flex justify-between text-red-500">
-                                    <span>Discount (-20%)</span>
-                                    <span className="font-semibold">-${discount}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Delivery Fee</span>
-                                    <span className="font-semibold">${deliveryFee}</span>
-                                </div>
+
+                                {subtotal > 0 && discount > 0 && (
+                                    <div className="flex justify-between text-red-500 mt-2">
+                                        <span>Discount (-{appliedDiscount?.value}%)</span>
+                                        <span className="font-semibold">- {discount.toLocaleString()} đ</span>
+                                    </div>
+                                )}
+
+                                {/* Delivery Fee - Only show when address is complete */}
+                                {isAddressComplete && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-600">Delivery Fee</span>
+                                        <span className="font-semibold">{formatNumber(deliveryFee)} đ</span>
+                                    </div>
+                                )}
+
                                 <div className="border-t pt-4 flex justify-between text-lg">
                                     <span className="font-semibold">Total</span>
-                                    <span className="font-bold">${total}</span>
+                                    <span className="font-bold">{formatNumber(total)} đ</span>
                                 </div>
                             </div>
 
@@ -155,15 +361,27 @@ export default function ShoppingCartPage() {
                                         className="w-full pl-10 pr-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                                     />
                                 </div>
-                                <button className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800">
+                                <button
+                                    onClick={handleApplyPromo}
+                                    className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800"
+                                >
                                     Apply
                                 </button>
                             </div>
 
-                            <button className="w-full bg-black text-white py-4 rounded-full font-medium flex items-center justify-center gap-2 hover:bg-gray-800">
+                            <button
+                                disabled={!isAddressComplete || cartItems.length === 0}
+                                className="w-full bg-black text-white py-4 rounded-full font-medium flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                            >
                                 Go to Checkout
                                 <ArrowRight size={20} />
                             </button>
+
+                            {!isAddressComplete && cartItems.length > 0 && (
+                                <p className="text-xs text-gray-500 text-center mt-2">
+                                    Vui lòng nhập địa chỉ giao hàng để tiếp tục
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -195,8 +413,14 @@ export default function ShoppingCartPage() {
                 </div>
             </div>
 
-            <Footer />
-
+            {/* Footer */}
+            <div className="bg-gray-100 py-8">
+                <div className="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
+                    © 2024 SHOP.CO. All rights reserved.
+                </div>
+            </div>
         </div>
     );
 }
+
+export default Cart;

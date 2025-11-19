@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
+
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('verify-email-otp', [AuthController::class, 'verifyEmailOtp']);
@@ -18,6 +22,8 @@ Route::post('resend-otp', [AuthController::class, 'resendOtp']);
 Route::get('/categories', [ProductController::class, 'categories']);
 Route::get('/dress-styles', [ProductController::class, 'dressStyles']); 
 Route::get('/brands', [ProductController::class, 'brands']);
+
+
 
 Route::prefix('products')->group(function () {
     Route::get('', [ProductController::class, 'index']);
@@ -36,8 +42,26 @@ Route::prefix('products')->group(function () {
         Route::post('/', [ProductController::class, 'store']);
         Route::put('/{id}', [ProductController::class, 'update']);
         Route::delete('/{id}', [ProductController::class, 'destroy']);
+
     });
 });
+
+
+Route::prefix('discounts')->group(function () {
+      Route::middleware(['auth:api', 'admin'])->group(function () {
+        // CRUD operations
+    });
+});
+
+Route::post('/discounts', [DiscountController::class, 'store']);
+Route::get('/discounts/{code}', [DiscountController::class, 'findByCode']);
+
+
+Route::get('/provinces', [AddressController::class, 'getProvinces']);
+Route::get('/provinces/{code}/wards', [AddressController::class, 'getWards']);
+
+Route::post('/reviews', [ReviewController::class, 'createReview']);
+Route::get( '/reviews/{productId}', [ReviewController::class,'getProductByIdProduct']);
 
 Route::prefix('admin/users')->group(function () {
     Route::get('/', [UserController::class, 'index']);
@@ -46,4 +70,5 @@ Route::prefix('admin/users')->group(function () {
     Route::put('/{user}', [UserController::class, 'update']);
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
+
 
