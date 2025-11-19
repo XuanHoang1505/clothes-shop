@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, User, X, Minus, Plus, Tag, ArrowRight, Mail, Twitter, Facebook, Instagram, Github, MapPin } from 'lucide-react';
-import Header from '@/components/site/header/Header';
-import { Footer } from 'antd/es/layout/layout';
+import { X, Minus, Plus, Tag, ArrowRight, Mail, MapPin } from 'lucide-react';
 import { formatNumber } from "@/utils/Formatter";
 import DiscountService from '@/services/site/DiscountService';
-import axios from "axios";
+import AddressService from '@/services/site/AddressService';
 
-export default function ShoppingCartPage() {
+function Cart() {
     const [cartItems, setCartItems] = useState([])
     const [promoCode, setPromoCode] = useState('');
     const [email, setEmail] = useState('');
@@ -15,57 +13,32 @@ export default function ShoppingCartPage() {
 
 
     // Address states
-    const [houseNumber, setHouseNumber] = useState('');
     const [provinces, setProvinces] = useState([]);
     const [wards, setWards] = useState([]);
     const [selectedProvince, setSelectedProvince] = useState('');
     const [selectedWard, setSelectedWard] = useState('');
     const [isLoadingWards, setIsLoadingWards] = useState(false);
+    const [houseNumber, setHouseNumber] = useState("");
 
 
-    // Fetch provinces on component mount
+    // Lấy danh sách tỉnh khi load
     useEffect(() => {
-        fetch('https://provinces.open-api.vn/api/p/')
-            .then(response => response.json())
-            .then(data => {
-                setProvinces(data);
-            })
-            .catch(error => console.error('Error fetching provinces:', error));
+        AddressService.getProvinces().then((data) => {
+
+            if (data) setProvinces(data);
+        });
     }, []);
 
-    // Fetch wards when province changes
+
+
     useEffect(() => {
-        if (selectedProvince) {
-            setIsLoadingWards(true);
-            fetch(`https://provinces.open-api.vn/api/p/${selectedProvince}?depth=2`)
-                .then(response => response.json())
-                .then(data => {
-                    // Lấy tất cả các phường/xã từ tất cả các quận/huyện
-                    const allWards = [];
-                    if (data.districts) {
-                        data.districts.forEach(district => {
-                            if (district.wards) {
-                                district.wards.forEach(ward => {
-                                    allWards.push({
-                                        ...ward,
-                                        districtName: district.name // Thêm tên quận để hiển thị
-                                    });
-                                });
-                            }
-                        });
-                    }
-                    setWards(allWards);
-                    setSelectedWard('');
-                    setIsLoadingWards(false);
-                })
-                .catch(error => {
-                    console.error('Error fetching wards:', error);
-                    setIsLoadingWards(false);
-                });
-        } else {
-            setWards([]);
-        }
+        if (!selectedProvince) return;
+        AddressService.getWards(selectedProvince).then((data) => {
+            setWards(data);
+        });
     }, [selectedProvince]);
+
+
 
 
     const getCart = () => {
@@ -286,7 +259,7 @@ export default function ShoppingCartPage() {
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                         >
                                             <option value="">Chọn Tỉnh/Thành phố</option>
-                                            {provinces.map(province => (
+                                            {provinces.map((province) => (
                                                 <option key={province.code} value={province.code}>
                                                     {province.name}
                                                 </option>
@@ -306,14 +279,16 @@ export default function ShoppingCartPage() {
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
                                             <option value="">
-                                                {isLoadingWards ? 'Đang tải...' : 'Chọn Phường/Xã'}
+                                                {isLoadingWards ? "Đang tải..." : "Chọn Phường/Xã"}
                                             </option>
-                                            {wards.map(ward => (
+
+                                            {wards.map((ward) => (
                                                 <option key={ward.code} value={ward.code}>
-                                                    {ward.name} ({ward.districtName})
+                                                    {ward.name}
                                                 </option>
                                             ))}
                                         </select>
+
                                         {selectedProvince && wards.length > 0 && (
                                             <p className="text-xs text-gray-500 mt-1">
                                                 Tìm thấy {wards.length} phường/xã
@@ -447,3 +422,5 @@ export default function ShoppingCartPage() {
         </div>
     );
 }
+
+export default Cart;

@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\ReviewController;
 
 Route::post('register', [AuthController::class, 'register']);
 Route::post('login', [AuthController::class, 'login']);
@@ -48,3 +50,10 @@ Route::prefix('discounts')->group(function () {
 
 Route::post('/discounts', [DiscountController::class, 'store']);
 Route::get('/discounts/{code}', [DiscountController::class, 'findByCode']);
+
+
+Route::get('/provinces', [AddressController::class, 'getProvinces']);
+Route::get('/provinces/{code}/wards', [AddressController::class, 'getWards']);
+
+Route::post('/reviews', [ReviewController::class, 'createReview']);
+Route::get( '/reviews/{productId}', [ReviewController::class,'getProductByIdProduct']);
