@@ -245,6 +245,27 @@ class ProductService implements ProductServiceInterface
         }
     }
 
+    public function getAllDressStyles(): array
+    {
+        try {
+            $dressStyles = $this->productRepository->getAllDressStyles();
+
+            return [
+                'success' => true,
+                'data' => $dressStyles
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error getting dress styles', [
+                'error' => $e->getMessage()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Không thể lấy danh sách kiểu váy'
+            ];
+        }
+    }
+
     public function getAllBrands(): array
     {
         try {

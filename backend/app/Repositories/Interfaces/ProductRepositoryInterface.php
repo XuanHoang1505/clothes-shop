@@ -15,6 +15,7 @@ interface ProductRepositoryInterface
     public function getNew(int $limit = 10);
     public function getBestseller(int $limit = 10);
     public function getAllCategories();
+    public function getAllDressStyles();
     public function getAllBrands();
     public function getRelatedProducts(string $productId, string $categorySlug, int $limit = 6);
     public function create(array $data);

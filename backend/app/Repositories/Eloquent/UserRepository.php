@@ -17,16 +17,13 @@ class UserRepository implements UserRepositoryInterface
     }
     public function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
-            'email' => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
+        return User::create($data);
     }
     public function update($id, array $data)
     {
         $user = User::findOrFail($id);
         $user->update($data);
+        
         return $user;
     }
     public function delete($id)

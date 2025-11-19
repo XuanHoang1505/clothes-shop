@@ -1,10 +1,12 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Http\Requests\User\CreateUserRequest;
+use App\Http\Requests\User\UpdateUserRequest;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use Illuminate\Http\Request;
 
 
 class UserController extends Controller
@@ -26,14 +28,14 @@ class UserController extends Controller
         return new UserResource($user);
     }
 
-    public function store(Request $request)
+    public function store(CreateUserRequest $request)
     {
         $user = $this->userService->createUser($request->validated());
         return (new UserResource($user))
             ->response()
             ->setStatusCode(201);
     }
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
         $updatedUser = $this->userService->updateUser($user, $request->validated());
         return new UserResource($updatedUser);

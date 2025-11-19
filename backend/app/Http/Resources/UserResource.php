@@ -10,9 +10,13 @@ class UserResource extends JsonResource
     {
         return [
             'id'    => $this->id,
-            'name'  => $this->name,
+            'fullName'  => $this->fullName,
             'email' => $this->email,
-            'created_at' => $this->created_at->format('d/m/Y H:i'),
+            'role' => $this->role,
+            'status' => $this->status,
+            'phoneNumber' => $this->phoneNumber,
+            'avatar' => $this->avatar,
+            'gender' => $this->gender,
         ];
     }
 }

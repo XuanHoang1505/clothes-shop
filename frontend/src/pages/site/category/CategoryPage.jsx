@@ -12,23 +12,27 @@ function CategoryPage() {
     pageSize: 9,
     total: 0,
   });
-  const [filters, setFilters] = useState({
+  
+  const [appliedFilters, setAppliedFilters] = useState({
     categories: [],
     priceRange: [0, 2000000],
     colors: [],
     sizes: [],
     dressStyles: [],
   });
-
+  
+  const [tempFilters, setTempFilters] = useState({
+    categories: [],
+    priceRange: [0, 2000000],
+    colors: [],
+    sizes: [],
+    dressStyles: [],
+  });
+  
+  const [categories, setCategories] = useState([]);
+  const [dressStyles, setDressStyles] = useState([]);
   const [sortBy, setSortBy] = useState("popular");
 
-  const categoryList = [
-    { name: "T-shirts", slug: "t-shirts" },
-    { name: "Shorts", slug: "shorts" },
-    { name: "Shirts", slug: "shirts" },
-    { name: "Hoodie", slug: "hoodie" },
-    { name: "Jeans", slug: "jeans" },
-  ];
   const colorList = [
     { name: "green", hex: "#10B981" },
     { name: "red", hex: "#EF4444" },
@@ -54,18 +58,42 @@ function CategoryPage() {
     "4X-Large",
   ];
 
-  const dressStyleList = ["Casual", "Formal", "Party", "Gym"];
+  // Hàm kiểm tra có filter nào được áp dụng không
+  const hasActiveFilters = (filters) => {
+    return (
+      filters.categories.length > 0 ||
+      filters.colors.length > 0 ||
+      filters.sizes.length > 0 ||
+      filters.dressStyles.length > 0 ||
+      filters.priceRange[0] !== 0 ||
+      filters.priceRange[1] !== 2000000
+    );
+  };
 
-  const fetchProducts = async () => {
+  // Hàm load products - dùng appliedFilters
+  const loadProducts = async () => {
     setLoading(true);
     try {
-      const result = await ProductService.getProducts(
-        pagination.current,
-        pagination.pageSize,
-        {
-          ...filters,
-        }
-      );
+      let result;
+      
+      if (hasActiveFilters(appliedFilters)) {
+        const transformedFilters = {
+          ...appliedFilters,
+          maxPrice: appliedFilters.priceRange[1],
+          minPrice: appliedFilters.priceRange[0],
+          priceRange: undefined,
+        };
+        result = await ProductService.filtersProduct(
+          pagination.current,
+          pagination.pageSize,
+          transformedFilters
+        );
+      } else {
+        result = await ProductService.getProducts(
+          pagination.current,
+          pagination.pageSize,
+        );
+      }
 
       setProducts(result.data || []);
       setPagination((prev) => ({
@@ -74,43 +102,39 @@ function CategoryPage() {
       }));
     } catch (error) {
       message.error("Không thể tải sản phẩm. Vui lòng thử lại!");
-      console.error("Lỗi khi lấy sản phẩm theo danh mục:", error);
+      console.error("Lỗi khi tải sản phẩm:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filtersProduct = async () => {
-    setLoading(true);
-
+  const fetchCategories = async () => {
     try {
-      const transformedFilters = {
-        ...filters,
-        maxPrice: filters.priceRange[1],
-        minPrice: filters.priceRange[0],
-        priceRange: undefined,
-      };
-      const result = await ProductService.filtersProduct(
-        pagination.current,
-        pagination.pageSize,
-        transformedFilters
-      );
-      setProducts(result.data || []);
-      setPagination((prev) => ({
-        ...prev,
-        total: result.total || 0,
-      }));
+      const result = await ProductService.getCategories();
+      setCategories(result.data || []);
     } catch (error) {
-      message.error("Không thể tải sản phẩm. Vui lòng thử lại!");
-      console.error("Lỗi khi lọc sản phẩm:", error);
-    } finally {
-      setLoading(false);
+      console.error("Lỗi khi lấy danh mục:", error);
     }
   };
+
+  const fetchDressStyles = async () => {
+    try {
+      const result = await ProductService.getDressStyles();
+      setDressStyles(result.data || []);
+    } catch (error) {
+      console.error("Lỗi khi lấy kiểu váy:", error);
+    }
+  };
+
+  // Load products khi pagination hoặc appliedFilters thay đổi
+  useEffect(() => {
+    loadProducts();
+  }, [pagination.current, pagination.pageSize, appliedFilters]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [pagination.current, pagination.pageSize]);
+    fetchCategories();
+    fetchDressStyles();
+  }, []);
 
   const handlePaginationChange = (page, pageSize) => {
     setPagination((prev) => ({
@@ -127,8 +151,9 @@ function CategoryPage() {
     return `-${Math.round(discount)}%`;
   };
 
+  // Toggle filter trong tempFilters (chưa apply)
   const toggleFilter = (filterType, value) => {
-    setFilters((prev) => {
+    setTempFilters((prev) => {
       const currentValues = prev[filterType];
       const newValues = currentValues.includes(value)
         ? currentValues.filter((v) => v !== value)
@@ -142,26 +167,39 @@ function CategoryPage() {
   };
 
   const handlePriceChange = (value) => {
-    setFilters((prev) => ({
+    setTempFilters((prev) => ({
       ...prev,
       priceRange: value,
     }));
   };
 
+  
   const applyFilters = () => {
+    setAppliedFilters({ ...tempFilters });
     setPagination((prev) => ({ ...prev, current: 1 }));
     setDrawerVisible(false);
-    filtersProduct();
   };
 
   const clearFilters = () => {
-    setFilters({
+    const resetFilters = {
       categories: [],
       priceRange: [0, 2000000],
       colors: [],
       sizes: [],
       dressStyles: [],
-    });
+    };
+    setTempFilters(resetFilters);
+    setAppliedFilters(resetFilters);
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
+  const removeFilter = (filterType, value) => {
+    const newFilters = {
+      ...appliedFilters,
+      [filterType]: appliedFilters[filterType].filter((v) => v !== value),
+    };
+    setAppliedFilters(newFilters);
+    setTempFilters(newFilters); 
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -187,7 +225,7 @@ function CategoryPage() {
       {/* Categories */}
       <div className="border-b pb-4">
         <h3 className="font-bold text-lg mb-3">Categories</h3>
-        {categoryList.map((category, index) => (
+        {categories.map((category, index) => (
           <div
             key={index}
             onClick={() => toggleFilter("categories", category.slug)}
@@ -196,13 +234,13 @@ function CategoryPage() {
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={filters.categories.includes(category.slug)}
+                checked={tempFilters.categories.includes(category.slug)}
                 onChange={() => {}}
                 className="w-4 h-4 cursor-pointer"
               />
               <span
                 className={
-                  filters.categories.includes(category.slug)
+                  tempFilters.categories.includes(category.slug)
                     ? "text-black font-medium"
                     : "text-gray-600"
                 }
@@ -223,7 +261,7 @@ function CategoryPage() {
           min={0}
           max={2000000}
           step={10000}
-          value={filters.priceRange}
+          value={tempFilters.priceRange}
           onChange={handlePriceChange}
           styles={{
             track: { backgroundColor: "black" },
@@ -231,8 +269,8 @@ function CategoryPage() {
           }}
         />
         <div className="flex justify-between mt-3 text-sm font-semibold">
-          <span>{formatNumber(filters.priceRange[0])}</span>
-          <span>{formatNumber(filters.priceRange[1])}</span>
+          <span>{formatNumber(tempFilters.priceRange[0])}</span>
+          <span>{formatNumber(tempFilters.priceRange[1])}</span>
         </div>
       </div>
 
@@ -245,7 +283,7 @@ function CategoryPage() {
               key={index}
               onClick={() => toggleFilter("colors", color.name)}
               className={`w-9 h-9 rounded-full border-2 hover:scale-110 transition-transform cursor-pointer relative ${
-                filters.colors.includes(color.name)
+                tempFilters.colors.includes(color.name)
                   ? "ring-2 ring-black ring-offset-2"
                   : ""
               }`}
@@ -255,7 +293,7 @@ function CategoryPage() {
               }}
               aria-label={color.name}
             >
-              {filters.colors.includes(color.name) && (
+              {tempFilters.colors.includes(color.name) && (
                 <span
                   className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${
                     color.hex === "#FFFFFF" || color.hex === "#FCD34D"
@@ -280,7 +318,7 @@ function CategoryPage() {
               key={index}
               onClick={() => toggleFilter("sizes", size)}
               className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                filters.sizes.includes(size)
+                tempFilters.sizes.includes(size)
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
@@ -294,27 +332,27 @@ function CategoryPage() {
       {/* Dress Style */}
       <div className="pb-4">
         <h3 className="font-bold text-lg mb-3">Dress Style</h3>
-        {dressStyleList.map((style, index) => (
+        {dressStyles.map((style, index) => (
           <div
             key={index}
-            onClick={() => toggleFilter("dressStyles", style)}
+            onClick={() => toggleFilter("dressStyles", style.slug)}
             className="flex justify-between items-center py-3 cursor-pointer hover:text-black transition-colors"
           >
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
-                checked={filters.dressStyles.includes(style)}
+                checked={tempFilters.dressStyles.includes(style.slug)}
                 onChange={() => {}}
                 className="w-4 h-4 cursor-pointer"
               />
               <span
                 className={
-                  filters.dressStyles.includes(style)
+                  tempFilters.dressStyles.includes(style.slug)
                     ? "text-black font-medium"
                     : "text-gray-600"
                 }
               >
-                {style}
+                {style.name}
               </span>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -375,62 +413,62 @@ function CategoryPage() {
               </div>
             </div>
 
-            {/* Active Filters Display */}
-            {(filters.categories.length > 0 ||
-              filters.colors.length > 0 ||
-              filters.sizes.length > 0 ||
-              filters.dressStyles.length > 0) && (
+            {/* Active Filters Display - dùng appliedFilters */}
+            {(appliedFilters.categories.length > 0 ||
+              appliedFilters.colors.length > 0 ||
+              appliedFilters.sizes.length > 0 ||
+              appliedFilters.dressStyles.length > 0) && (
               <div className="mb-4 flex flex-wrap gap-2">
-                {filters.categories.map((cat) => (
+                {appliedFilters.categories.map((cat) => (
                   <span
                     key={cat}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
                   >
                     {cat}
                     <button
-                      onClick={() => toggleFilter("categories", cat)}
+                      onClick={() => removeFilter("categories", cat)}
                       className="hover:text-red-600"
                     >
                       ×
                     </button>
                   </span>
                 ))}
-                {filters.colors.map((color) => (
+                {appliedFilters.colors.map((color) => (
                   <span
                     key={color}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
                   >
                     {color}
                     <button
-                      onClick={() => toggleFilter("colors", color)}
+                      onClick={() => removeFilter("colors", color)}
                       className="hover:text-red-600"
                     >
                       ×
                     </button>
                   </span>
                 ))}
-                {filters.sizes.map((size) => (
+                {appliedFilters.sizes.map((size) => (
                   <span
                     key={size}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
                   >
                     {size}
                     <button
-                      onClick={() => toggleFilter("sizes", size)}
+                      onClick={() => removeFilter("sizes", size)}
                       className="hover:text-red-600"
                     >
                       ×
                     </button>
                   </span>
                 ))}
-                {filters.dressStyles.map((style) => (
+                {appliedFilters.dressStyles.map((style) => (
                   <span
                     key={style}
                     className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
                   >
                     {style}
                     <button
-                      onClick={() => toggleFilter("dressStyles", style)}
+                      onClick={() => removeFilter("dressStyles", style)}
                       className="hover:text-red-600"
                     >
                       ×
