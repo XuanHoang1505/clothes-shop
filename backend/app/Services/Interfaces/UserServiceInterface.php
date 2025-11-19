@@ -11,7 +11,8 @@ interface UserServiceInterface
     public function register(array $data);
     public function login(array $credentials);
     public function sendPasswordResetOtp(string $email): array;
-    public function verifyOtp(string $email, string $otp): array;
+    public function verifyResetPasswordOtp(string $email, string $otp): array;
     public function resetPassword(string $email, string $newPassword): array;
     public function resendOtp(string $email): array;
+    public function sendVerifyEmailOtp(string $email): array;
 }

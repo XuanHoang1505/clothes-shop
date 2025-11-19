@@ -3,17 +3,20 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\UserController;
 
 Route::post('register', [AuthController::class, 'register']);
+Route::post('verify-email-otp', [AuthController::class, 'verifyEmailOtp']);
 Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout']);
 
 Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('verify-otp', [AuthController::class, 'verifyResetPasswordOtp']);
 Route::post('reset-password', [AuthController::class, 'resetPassword']);
 Route::post('resend-otp', [AuthController::class, 'resendOtp']);
 
 Route::get('/categories', [ProductController::class, 'categories']);
+Route::get('/dress-styles', [ProductController::class, 'dressStyles']); 
 Route::get('/brands', [ProductController::class, 'brands']);
 
 Route::prefix('products')->group(function () {
@@ -34,5 +37,13 @@ Route::prefix('products')->group(function () {
         Route::put('/{id}', [ProductController::class, 'update']);
         Route::delete('/{id}', [ProductController::class, 'destroy']);
     });
+});
+
+Route::prefix('admin/users')->group(function () {
+    Route::get('/', [UserController::class, 'index']);
+    Route::get('/{user}', [UserController::class, 'show']);
+    Route::post('/', [UserController::class, 'store']);
+    Route::put('/{user}', [UserController::class, 'update']);
+    Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
