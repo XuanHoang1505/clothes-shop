@@ -191,9 +191,7 @@ class UserService implements UserServiceInterface
             ];
         }
 
-        $key = "verify_email_{$email}";
-
-        if (!$this->otpService->canResend($key)) {
+        if (!$this->otpService->canResend($email)) {
             return [
                 'success' => false,
                 'message' => 'Vui lòng đợi 1 phút trước khi gửi lại OTP',
@@ -201,8 +199,8 @@ class UserService implements UserServiceInterface
             ];
         }
 
-        $otp = $this->otpService->generate($key);
-        $this->otpService->setResendLimit($key);
+        $otp = $this->otpService->generate($email);
+        $this->otpService->setResendLimit($email);
 
         $user->notify(new VerifyEmailOtpNotification($otp));
 
@@ -218,8 +216,6 @@ class UserService implements UserServiceInterface
 
     public function verifyEmailOtp(string $email, string $otp): array
     {
-        $key = "verify_email_{$email}";
-
         $user = $this->userRepository->findByEmail($email);
         if (!$user) {
             return [
@@ -228,17 +224,17 @@ class UserService implements UserServiceInterface
             ];
         }
 
-        if (!$this->otpService->exists($key)) {
+        if (!$this->otpService->exists($email)) {
             return [
                 'success' => false,
                 'message' => 'OTP không tồn tại hoặc đã hết hạn'
             ];
         }
 
-        $isValid = $this->otpService->verify($key, $otp);
+        $isValid = $this->otpService->verify($email, $otp);
 
         if (!$isValid) {
-            $remaining = $this->otpService->getRemainingAttempts($key);
+            $remaining = $this->otpService->getRemainingAttempts($email);
 
             return [
                 'success' => false,
@@ -255,7 +251,7 @@ class UserService implements UserServiceInterface
             'isVerified' => true
         ]);
 
-        $this->otpService->delete($key);
+        $this->otpService->delete($email);
 
         return [
             'success' => true,

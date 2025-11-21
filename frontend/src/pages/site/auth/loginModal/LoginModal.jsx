@@ -1,11 +1,16 @@
 import { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import { Modal, Spin, Checkbox } from "antd";
-import { ArrowLeftOutlined, EyeOutlined, EyeInvisibleOutlined, LoadingOutlined } from "@ant-design/icons";
+import {
+  ArrowLeftOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 
-import { login } from "../../../../services/site/AuthService";
-import { UserContext } from "../../../../contexts/UserContext";
+import { login } from "@/services/site/AuthService";
+import { UserContext } from "@/contexts/UserContext";
 
 function LoginModal({
   show,
@@ -20,7 +25,7 @@ function LoginModal({
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { updateUser } = useContext(UserContext);
   const navigate = useNavigate();
 
@@ -46,46 +51,35 @@ function LoginModal({
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-    if (validate()) {
-      try {
-        setIsLoading(true);
-        const data = await login(email, password);
-        const user = data.user;
-        const userDetail = {
-          userId: user.id,
-          fullName: user.fullName,
-          email: user.email,
-          avatar: user.avatar,
-          role: user.role,
-        };
-        // lưu nó vào context để context lưu vào localStorage và sử dụng chung cho toàn bộ ứng dụng
-        updateUser(userDetail);
+    if (!validate()) return;
 
-        if (user.role === "ADMIN") {
-          navigate("/admin/users");
-        } else {
-          // Đóng modal sau khi đăng nhập thành công
-          handleCloseModal();
-        }
-        toast.success("Đăng nhập thành công!");
-      } catch (error) {
-        if (error.response) {
-          const responseData = error.response.data;
-          if (typeof responseData === "string") {
-            toast.error(responseData);
-          } else if (responseData?.message) {
-            toast.error(responseData.message);
-          } else {
-            toast.error("Đã xảy ra lỗi, vui lòng thử lại sau!");
-          }
-        } else if (error.message) {
-          toast.error(error.message);
-        } else {
-          toast.error("Đã xảy ra lỗi, vui lòng thử lại sau!");
-        }
-      } finally {
-        setIsLoading(false);
+    try {
+      setIsLoading(true);
+      const data = await login(email, password);
+
+      const userDetail = {
+        userId: data.user.id,
+        fullName: data.user.fullName,
+        email: data.user.email,
+        avatar: data.user.avatar,
+        role: data.user.role,
+      };
+
+      updateUser(userDetail);
+      toast.success(data.message);
+
+      if (data.user.role === "ADMIN") {
+        navigate("/admin/users");
+      } else {
+        handleCloseModal();
       }
+    } catch (error) {
+      // Backend luôn trả message trong error.response.data.message
+      const errorMessage =
+        error.response?.data?.message || "Đã xảy ra lỗi, vui lòng thử lại sau!";
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -103,12 +97,14 @@ function LoginModal({
       footer={null}
       centered
       width={500}
-      closeIcon={<span className="text-gray-400 hover:text-gray-600 text-xl">×</span>}
+      closeIcon={
+        <span className="text-gray-400 hover:text-gray-600 text-xl">×</span>
+      }
     >
       <div className="pt-2">
         {/* Header */}
         <div className="flex items-center mb-6">
-          <ArrowLeftOutlined 
+          <ArrowLeftOutlined
             className="text-xl cursor-pointer hover:text-gray-600 transition-colors"
             onClick={handleBack}
           />
@@ -128,8 +124,8 @@ function LoginModal({
 
             {/* Email Field */}
             <div className="mb-4">
-              <label 
-                htmlFor="emailField" 
+              <label
+                htmlFor="emailField"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Email
@@ -139,22 +135,24 @@ function LoginModal({
                 id="emailField"
                 placeholder="Nhập vào số Email của bạn"
                 className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                  errors.email 
-                    ? "border-red-500 focus:ring-red-200" 
+                  errors.email
+                    ? "border-red-500 focus:ring-red-200"
                     : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
                 }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
               {errors.email && (
-                <div className="text-red-500 text-sm mt-1.5">{errors.email}</div>
+                <div className="text-red-500 text-sm mt-1.5">
+                  {errors.email}
+                </div>
               )}
             </div>
 
             {/* Password Field */}
             <div className="mb-4 relative">
-              <label 
-                htmlFor="passwordField" 
+              <label
+                htmlFor="passwordField"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Mật khẩu
@@ -165,8 +163,8 @@ function LoginModal({
                   id="passwordField"
                   placeholder="Nhập vào mật khẩu của bạn"
                   className={`w-full px-4 py-2.5 pr-12 border rounded-lg focus:outline-none focus:ring-2 transition-all ${
-                    errors.password 
-                      ? "border-red-500 focus:ring-red-200" 
+                    errors.password
+                      ? "border-red-500 focus:ring-red-200"
                       : "border-gray-300 focus:ring-blue-200 focus:border-blue-500"
                   }`}
                   value={password}
@@ -181,7 +179,9 @@ function LoginModal({
                 </button>
               </div>
               {errors.password && (
-                <div className="text-red-500 text-sm mt-1.5">{errors.password}</div>
+                <div className="text-red-500 text-sm mt-1.5">
+                  {errors.password}
+                </div>
               )}
             </div>
 
@@ -234,14 +234,21 @@ function LoginModal({
             {/* Terms */}
             <p className="text-xs text-gray-500 leading-relaxed">
               Nhấn chọn "Đăng nhập" có nghĩa là bạn đã đọc và đồng ý{" "}
-              <a href="#" className="text-blue-600 hover:text-blue-800 transition-colors">
+              <a
+                href="#"
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+              >
                 Thỏa thuận quyền riêng tư
               </a>{" "}
               &{" "}
-              <a href="#" className="text-blue-600 hover:text-blue-800 transition-colors">
+              <a
+                href="#"
+                className="text-blue-600 hover:text-blue-800 transition-colors"
+              >
                 Điều khoản dịch vụ
               </a>
-              , đồng thời có nghĩa là bạn xác nhận đã tròn 18 tuổi có thể sử dụng dịch vụ của chúng tôi
+              , đồng thời có nghĩa là bạn xác nhận đã tròn 18 tuổi có thể sử
+              dụng dịch vụ của chúng tôi
             </p>
           </form>
         </div>
