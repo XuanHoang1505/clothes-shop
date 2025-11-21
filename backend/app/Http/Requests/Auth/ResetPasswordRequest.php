@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests\User;
+namespace App\Http\Requests\Auth;
 use App\Http\Requests\BaseRequest;
 
 class ResetPasswordRequest extends BaseRequest
@@ -14,7 +14,7 @@ class ResetPasswordRequest extends BaseRequest
     {
         return [
             'email' => 'required|email|exists:users,email',
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => 'required|string|min:8',
         ];
     }
     public function messages(): array
@@ -26,7 +26,6 @@ class ResetPasswordRequest extends BaseRequest
             'new_password.required' => 'New password is required',
             'new_password.string' => 'New password must be a string',
             'new_password.min' => 'New password must be at least 8 characters',
-            'new_password.confirmed' => 'New password confirmation does not match',
         ];
     }
 }

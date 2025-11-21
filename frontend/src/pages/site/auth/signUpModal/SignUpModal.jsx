@@ -9,7 +9,6 @@ function SignUpModal({
   handleClose,
   handleBack,
   handleShowLoginModal,
-  handleSignUpSuccess,
   handleShowVerifyOtpModal,
 }) {
   const [fullName, setFullName] = useState("");
@@ -65,7 +64,7 @@ function SignUpModal({
         const response = await register(userData);
         toast.success(response.message || "Đăng ký thành công! Vui lòng kiểm tra email để xác nhận.");
 
-        handleShowVerifyOtpModal({ identifier: email });
+        handleShowVerifyOtpModal({ identifier: email, type: "SignUp" });
       } catch (error) {
         if (error.response && error.response.data) {
           toast.error(error.response.data);

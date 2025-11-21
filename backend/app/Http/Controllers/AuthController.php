@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\ChangePasswordRequest;
-use App\Http\Requests\Auth\LoginRequest as AuthLoginRequest;
-use App\Http\Requests\User\ForgotPasswordRequest;
-use App\Http\Requests\User\ResetPasswordRequest;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Services\Interfaces\UserServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -37,7 +37,7 @@ class AuthController extends Controller
         return response()->json($result, $result['success'] ? 200 : 400);
     }
 
-    public function login(AuthLoginRequest $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
         $result = $this->userService->login($request->validated());
 
