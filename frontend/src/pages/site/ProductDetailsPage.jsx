@@ -5,7 +5,6 @@ import WriteComment from "@/components/site/writeComment/WriteComment";
 function ProductDetailsPage() {
     const { slug } = useParams(); // Lấy id từ URL, ví dụ /product/66f90a9e8b9d1e123456abcd
 
-
     return (
         <div>
             <ProductDetail productSlug={slug} />  {/* Truyền id xuống */}

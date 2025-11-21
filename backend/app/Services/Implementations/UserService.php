@@ -7,6 +7,7 @@ use App\Notifications\UserCreatedNotification;
 use App\Notifications\VerifyEmailOtpNotification;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Services\CloudinaryService;
 use App\Services\OtpService;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -16,11 +17,13 @@ class UserService implements UserServiceInterface
 {
     protected $userRepository;
     protected $otpService;
+    protected $cloudinaryService;
 
-    public function __construct(UserRepositoryInterface $userRepository, OtpService $otpService)
+    public function __construct(UserRepositoryInterface $userRepository, OtpService $otpService, CloudinaryService $cloudinaryService)
     {
         $this->userRepository = $userRepository;
         $this->otpService = $otpService;
+        $this->cloudinaryService = $cloudinaryService;
     }
 
     public function getAllUsers()
@@ -50,10 +53,37 @@ class UserService implements UserServiceInterface
 
     public function updateUser(User $user, array $data)
     {
-        $existing = $this->userRepository->findByEmail($data['email'] ?? '');
+        if (isset($data['email']) && $data['email'] !== $user->email) {
+            $existing = $this->userRepository->findByEmail($data['email']);
+            if ($existing && $existing->id !== $user->id) {
+                throw new \Exception('Email đã tồn tại');
+            }
+        }
 
-        if ($existing && $existing->id != $user->id) {
-            throw new \Exception('Email already taken');
+        if (isset($data['avatar']) && $data['avatar'] instanceof \Illuminate\Http\UploadedFile) {
+            try {
+                // Xóa avatar cũ nếu có
+                if ($user->avatar) {
+                    $oldPublicId = $this->cloudinaryService->extractPublicId($user->avatar);
+                    if ($oldPublicId) {
+                        $this->cloudinaryService->deleteImage($oldPublicId);
+                    }
+                }
+
+                // Upload avatar mới
+                $avatarUrl = $this->cloudinaryService->uploadImage(
+                    $data['avatar'], 
+                    'user_avatar'
+                );
+                
+                $data['avatar'] = $avatarUrl;
+                
+            } catch (\Exception $e) {
+                throw new \Exception('Upload avatar thất bại: ' . $e->getMessage());
+            }
+        } else {
+            // Nếu không upload avatar mới, giữ nguyên avatar cũ
+            unset($data['avatar']);
         }
 
         return $this->userRepository->update($user->id, $data);
@@ -363,8 +393,29 @@ class UserService implements UserServiceInterface
         return $randomPassword;
     }
 
-    public function sendNotification(User $user, string $message): void
+    public function changePassword(string $email, string $currentPassword, string $newPassword): array
     {
-        
+        $user = $this->userRepository->findByEmail($email);
+
+        if (!$user) {
+            return [
+                'success' => false,
+                'message' => 'Email không tồn tại trong hệ thống',
+            ];
+        }
+
+        if (!Hash::check($currentPassword, $user->password)) {
+            return [
+                'success' => false,
+                'message' => 'Mật khẩu hiện tại không đúng',
+            ];
+        }
+
+        $this->userRepository->updatePassword($user->id, $newPassword);
+
+        return [
+            'success' => true,
+            'message' => 'Đổi mật khẩu thành công',
+        ];
     }
 }

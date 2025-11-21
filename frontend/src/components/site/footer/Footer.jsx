@@ -1,3 +1,4 @@
+import { FacebookOutlined, GithubOutlined, InstagramOutlined, TwitterOutlined } from "@ant-design/icons";
 
 const Footer = () => {
     return (
@@ -11,16 +12,16 @@ const Footer = () => {
                         </p>
                         <div className="flex gap-3">
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200">
-                                <Twitter size={16} />
+                                <TwitterOutlined />
                             </div>
                             <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-800">
-                                <Facebook size={16} />
+                               <FacebookOutlined />
                             </div>
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200">
-                                <Instagram size={16} />
+                                <InstagramOutlined />
                             </div>
                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-200">
-                                <Github size={16} />
+                                <GithubOutlined />
                             </div>
                         </div>
                     </div>

@@ -1,5 +1,4 @@
-import axiosInstance from "../../config/axiosInstance"; // Axios config sẵn baseURL và headers
-import { formatDateTimeToDMY, formatToDateInput } from "../../utils/formatDate";
+import axiosInstance from "../../config/axiosInstance"; 
 
 const API_URL = "/admin/users";
 
@@ -23,7 +22,7 @@ const getUsers = async () => {
 const getUserById = async (id) => {
   try {
     const response = await axiosInstance.get(`${API_URL}/${id}`);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     handleError(error, `Lỗi khi lấy người dùng với ID: ${id}`);
   }
@@ -47,7 +46,7 @@ const getUserByUsername = async (username) => {
 const createUser = async (userData) => {
   try {
     const response = await axiosInstance.post(API_URL, userData);
-    return response.data;
+    return response.data.data;
   } catch (error) {
     handleError(error, "Lỗi khi thêm người dùng:");
   }
@@ -64,9 +63,12 @@ const updateUser = async (id, userData, avatar) => {
     formData.append("avatar", avatar);
   }
 
-  return axiosInstance.post(`${API_URL}/${id}?_method=PUT`, formData, {
+  const response = await axiosInstance.post(`${API_URL}/${id}?_method=PUT`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+
+  return response.data.data;
+  
 };
 
 const deleteUser = async (id) => {
@@ -92,12 +94,12 @@ const verifyPassword = async (userId, password) => {
 };
 
 // Hàm thay đổi mật khẩu
-const changePassword = async (userId, currentPassword, newPassword) => {
+const changePassword = async (email, currentPassword, newPassword) => {
   try {
     const response = await axiosInstance.post(`/auth/change-password`, {
-      userId,
-      currentPassword,
-      newPassword,
+      email: email,
+      password: currentPassword,
+      new_password: newPassword,
     });
     return response.data;
   } catch (error) {
