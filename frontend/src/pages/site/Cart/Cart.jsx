@@ -163,21 +163,6 @@ function Cart() {
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Top Banner */}
-            <div className="bg-black text-white text-center py-2 px-4 text-sm relative">
-                Sign up and get 20% off to your first order. <span className="underline font-medium cursor-pointer">Sign Up Now</span>
-                <button className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <X size={16} />
-                </button>
-            </div>
-
-            {/* Header */}
-            <div className="border-b">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">SHOP.CO</h1>
-                </div>
-            </div>
-
             {/* Breadcrumb */}
             <div className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-600">
                 <span>Home</span> <span className="mx-2">›</span> <span className="text-black">Cart</span>

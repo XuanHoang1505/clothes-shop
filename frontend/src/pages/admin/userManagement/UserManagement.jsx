@@ -107,6 +107,7 @@ const UserManagement = () => {
     }));
   };
 
+
   const handleAvatarClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -202,6 +203,8 @@ const UserManagement = () => {
           updatedFormData,
           selectedAvatar
         );
+        console.log(updatedUser);
+        
         const formattedUser = {
           ...updatedUser,
           gender: formData.gender === null ? "" : formData.gender ? "1" : "0",
@@ -315,7 +318,7 @@ const UserManagement = () => {
                 status: formData.status === "ACTIVE",
               }}
             >
-              <Form.Item
+              {/* <Form.Item
                 label="Họ và tên"
                 name="fullName"
                 rules={[
@@ -334,9 +337,9 @@ const UserManagement = () => {
                   }
                   className="w-full"
                 />
-              </Form.Item>
+              </Form.Item> */}
 
-              <Form.Item
+              {/* <Form.Item
                 label="Email"
                 name="email"
                 rules={[
@@ -350,9 +353,9 @@ const UserManagement = () => {
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   className="w-full"
                 />
-              </Form.Item>
+              </Form.Item> */}
 
-              <Form.Item
+              {/* <Form.Item
                 label="Số điện thoại"
                 name="phoneNumber"
                 rules={[
@@ -370,9 +373,9 @@ const UserManagement = () => {
                   }
                   className="w-full"
                 />
-              </Form.Item>
+              </Form.Item> */}
 
-              <Form.Item label="Giới tính" name="gender">
+              {/* <Form.Item label="Giới tính" name="gender">
                 <Select
                   placeholder="Chọn giới tính"
                   onChange={(value) => handleInputChange("gender", value)}
@@ -382,7 +385,7 @@ const UserManagement = () => {
                   <Option value="1">Nam</Option>
                   <Option value="0">Nữ</Option>
                 </Select>
-              </Form.Item>
+              </Form.Item> */}
 
               <Form.Item
                 label="Vai trò"

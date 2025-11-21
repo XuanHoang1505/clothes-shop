@@ -1,14 +1,16 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Http\Requests\Auth\ChangePasswordRequest;
+use App\Http\Requests\Auth\LoginRequest as AuthLoginRequest;
 use App\Http\Requests\User\ForgotPasswordRequest;
-use App\Http\Requests\User\LoginRequest;
 use App\Http\Requests\User\ResetPasswordRequest;
-use App\Http\Requests\User\VerifyOtpRequest;
+use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Services\Interfaces\UserServiceInterface;
 use Illuminate\Http\JsonResponse;
-use App\Http\Resources\UserResource;    
-use App\Http\Requests\User\RegisterRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 
@@ -30,12 +32,12 @@ class AuthController extends Controller
     public function verifyEmailOtp(VerifyOtpRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $result = $this->userService->verifyResetPasswordOtp($data['email'], $data['otp']);
+        $result = $this->userService->verifyEmailOtp($data['email'], $data['otp']);
 
         return response()->json($result, $result['success'] ? 200 : 400);
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(AuthLoginRequest $request): JsonResponse
     {
         $result = $this->userService->login($request->validated());
 
@@ -54,11 +56,35 @@ class AuthController extends Controller
 
     public function logout(): JsonResponse
     {
-        JWTAuth::invalidate(JWTAuth::getToken());
+        Log::info('Logout attempt');
+        Log::info('Headers: ' . json_encode(request()->headers->all()));
+        
+        try {
+            $token = JWTAuth::getToken();
+            Log::info('Token: ' . $token);
+            
+            if (!$token) {
+                Log::error('Token not found in request');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Token không tồn tại',
+                ], 401);
+            }
 
-        return response()->json([
-            'message' => 'Đăng xuất thành công!',
-        ], 200);
+            JWTAuth::invalidate($token);
+            Log::info('Logout successful');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Đăng xuất thành công!',
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Đăng xuất thất bại: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
@@ -92,5 +118,13 @@ class AuthController extends Controller
             (isset($result['code']) && $result['code'] === 'RATE_LIMIT' ? 429 : 400);
 
         return response()->json($result, $statusCode);
+    }
+
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $result = $this->userService->changePassword($data['email'], $data['password'], $data['new_password']);
+
+        return response()->json($result, $result['success'] ? 200 : 400);
     }
 }
