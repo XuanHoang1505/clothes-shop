@@ -3,6 +3,7 @@ import { X, Minus, Plus, Tag, ArrowRight, Mail, MapPin } from 'lucide-react';
 import { formatNumber } from "@/utils/Formatter";
 import DiscountService from '@/services/site/DiscountService';
 import AddressService from '@/services/site/AddressService';
+import { useNavigate } from "react-router-dom";
 
 function Cart() {
     const [cartItems, setCartItems] = useState([])
@@ -10,7 +11,6 @@ function Cart() {
     const [email, setEmail] = useState('');
     const [discount, setDiscount] = useState(0);
     const [appliedDiscount, setAppliedDiscount] = useState(null);
-
 
     // Address states
     const [provinces, setProvinces] = useState([]);
@@ -20,6 +20,7 @@ function Cart() {
     const [isLoadingWards, setIsLoadingWards] = useState(false);
     const [houseNumber, setHouseNumber] = useState("");
 
+    const navigate = useNavigate();
 
     // Lấy danh sách tỉnh khi load
     useEffect(() => {
@@ -143,6 +144,22 @@ function Cart() {
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const deliveryFee = 15;
     const total = subtotal - discount + deliveryFee;
+
+    const handleGoToCheckout = () => {
+        const provinceObj = provinces.find(p => p.code === selectedProvince);
+        const wardObj = wards.find(w => w.code === selectedWard);
+
+        const address = {
+            houseNumber,
+            province: provinceObj?.name || "",
+            ward: wardObj?.name || "",
+        };
+
+        localStorage.setItem("shippingAddress", JSON.stringify(address));
+
+        navigate("/checkout");
+    };
+
 
     return (
         <div className="min-h-screen bg-white">
@@ -371,6 +388,7 @@ function Cart() {
 
                             <button
                                 disabled={!isAddressComplete || cartItems.length === 0}
+                                onClick={handleGoToCheckout}
                                 className="w-full bg-black text-white py-4 rounded-full font-medium flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                             >
                                 Go to Checkout

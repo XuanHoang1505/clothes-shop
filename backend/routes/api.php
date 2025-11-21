@@ -4,6 +4,7 @@ use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
@@ -71,4 +72,6 @@ Route::prefix('admin/users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
-
+Route::post('/vnpay_payment',[CheckoutController::class,'vnpay_payment']);
+Route::get('/vnpay-return', [CheckoutController::class, 'vnpay_return']);
+Route::get('/orders/{order_code}', [CheckoutController::class, 'getOrder']);

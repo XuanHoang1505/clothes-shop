@@ -6,6 +6,7 @@ import Checkout from "./pages/site/Checkout/Checkout";
 import AdminLayout from "@/layouts/admin/AdminLayout";
 import './css/style.css';
 import UserManagement from "./pages/admin/userManagement/UserManagement";
+import VNPayReturn from "./pages/site/vnpay/VNPayReturn";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/product/:slug" element={<ProductDetailsPage />} />
+      <Route path="/vnpay-return" element={<VNPayReturn />} />
     </Routes>
   );
 }

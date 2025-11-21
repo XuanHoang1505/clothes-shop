@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Mail, MapPin, User, Phone, CreditCard, Building2, Calendar, Lock, ArrowLeft } from 'lucide-react';
+import { X, MapPin, User, CreditCard, Lock, ArrowLeft } from 'lucide-react';
 
 function Checkout() {
     const [cartItems, setCartItems] = useState([]);
@@ -25,6 +25,18 @@ function Checkout() {
     const [cvv, setCvv] = useState('');
 
     const [isProcessing, setIsProcessing] = useState(false);
+
+
+    useEffect(() => {
+        const saved = localStorage.getItem("shippingAddress");
+        if (saved) {
+            const address = JSON.parse(saved);
+            setHouseNumber(address.houseNumber || "");
+            setProvince(address.province || "");
+            setWard(address.ward || "");
+        }
+    }, []);
+
 
     useEffect(() => {
         // Load cart from localStorage
@@ -100,6 +112,73 @@ function Checkout() {
             // Redirect to success page or home
             window.location.href = '/';
         }, 2000);
+    };
+
+    const handleVNPayPayment = async (amount) => {
+        if (!isFormValid()) {
+            alert('Vui lòng điền đầy đủ thông tin trước khi thanh toán!');
+            return;
+        }
+
+        setIsProcessing(true); // Thêm loading state
+
+        try {
+            // Chuẩn bị dữ liệu đơn hàng theo format controller yêu cầu
+            const orderData = {
+                customer_info: {
+                    fullName: fullName,
+                    email: email,
+                    phone: phone
+                },
+                shipping_address: {
+                    houseNumber: houseNumber,
+                    province: province,
+                    ward: ward,
+                    note: note || ''
+                },
+                items: cartItems.map(item => ({
+                    product_id: item.id || item._id || '', // ID sản phẩm
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    size: item.size || null,
+                    color: item.color || null,
+                    image: item.image || null
+                })),
+                subtotal: subtotal,
+                discount: discount,
+                delivery_fee: deliveryFee,
+                total_vnpay: total, // Sử dụng total thay vì amount
+                note: note || ''
+            };
+
+            const response = await fetch('http://127.0.0.1:8000/api/vnpay_payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            const data = await response.json();
+
+            if (data.code === '00' && data.payment_url) {
+                // Lưu order_code để tracking sau khi thanh toán
+                localStorage.setItem('current_order_code', data.order_code);
+                localStorage.setItem('current_order_id', data.order_id);
+
+                // Redirect sang VNPAY
+                window.location.href = data.payment_url;
+            } else {
+                alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
+                setIsProcessing(false);
+            }
+        } catch (error) {
+            console.error('Lỗi thanh toán VNPAY:', error);
+            alert('Có lỗi xảy ra khi kết nối server. Vui lòng thử lại!');
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -211,9 +290,9 @@ function Checkout() {
                                     <input
                                         type="text"
                                         value={houseNumber}
-                                        onChange={(e) => setHouseNumber(e.target.value)}
+                                        readOnly
                                         placeholder="123 Nguyễn Trãi"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                                     />
                                 </div>
 
@@ -225,9 +304,9 @@ function Checkout() {
                                         <input
                                             type="text"
                                             value={province}
-                                            onChange={(e) => setProvince(e.target.value)}
+                                            readOnly
                                             placeholder="Hà Nội"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                                         />
                                     </div>
 
@@ -238,9 +317,9 @@ function Checkout() {
                                         <input
                                             type="text"
                                             value={ward}
-                                            onChange={(e) => setWard(e.target.value)}
+                                            readOnly
                                             placeholder="Đống Đa"
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
@@ -382,10 +461,41 @@ function Checkout() {
                                         className="mt-1"
                                     />
                                     <div className="flex-1">
-                                        <div className="font-semibold">Chuyển khoản ngân hàng</div>
+                                        <div className="font-semibold">Thanh toán VNPAY</div>
                                         <p className="text-sm text-gray-600 mt-1">
-                                            Chuyển khoản qua Internet Banking hoặc Mobile Banking
+                                            Thanh toán qua cổng VNPAY - Nhanh chóng và bảo mật
                                         </p>
+
+                                        {paymentMethod === 'bank' && (
+                                            <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-200">
+                                                <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                                    <Lock size={16} className="text-green-600" />
+                                                    <span>Giao dịch được mã hóa và bảo mật bởi VNPAY</span>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleVNPayPayment(total)}
+                                                    disabled={isProcessing}
+                                                    className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    {isProcessing ? (
+                                                        <>
+                                                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                            Đang xử lý...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <CreditCard size={18} />
+                                                            Thanh toán ngay với VNPAY
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                <p className="text-xs text-gray-500 text-center mt-3">
+                                                    Hỗ trợ thanh toán qua ATM, Internet Banking, Ví điện tử
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </label>
                             </div>
