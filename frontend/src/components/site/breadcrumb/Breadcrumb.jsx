@@ -54,8 +54,8 @@ function DynamicBreadcrumb({ category }) {
         case "profile":
           label = "Trang cá nhân";
           break;
-        case "latest":
-          label = "Tin tức mới nhất";
+        case "my-order":
+          label = "Đơn hàng của tôi";
           break;
         case "submit":
           label = "Gửi bài báo";

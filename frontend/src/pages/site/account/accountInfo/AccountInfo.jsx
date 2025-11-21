@@ -30,7 +30,6 @@ function AccountInfo() {
     try {
       setLoading(true);
       const data = await UserService.getUserById(userId);
-      console.log(data);
       setProfile(data);
       
       // Set form values

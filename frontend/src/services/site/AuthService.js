@@ -101,6 +101,19 @@ export const resendOtp = async (identifier) => {
   }
 };
 
+export const verifyEmailOtp = async (identifier, otp) => {
+  try {
+    const response = await axiosInstance.post(`${AUTH_URL}/verify-email-otp`, {
+      email: identifier,
+      otp,
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    throw error;
+  }
+};
+
 // Xác thực OTP
 export const verifyOtp = async (identifier, otp) => {
   try {

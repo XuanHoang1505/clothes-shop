@@ -3,10 +3,9 @@ import { Modal, Spin } from "antd";
 import { ArrowLeftOutlined, LoadingOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 import {
-  verifyOtp,
+  verifyEmailOtp,
   resendOtp,
-  register,
-} from "../../../../services/site/AuthService";
+} from "@/services/site/AuthService";
 
 function VerifyOtpModal({
   show,
@@ -100,10 +99,8 @@ function VerifyOtpModal({
     if (validateOtp(otp)) {
       try {
         setIsLoading(true);
-
-        const message = await verifyOtp(identifier, otp);
-        toast.success(message);
-
+        const response = await verifyEmailOtp(identifier, otp);
+        toast.success(response.message || "Xác thực OTP thành công!");
         handleShowLoginModal();
       } catch (error) {
         if (!error.response) {
@@ -262,11 +259,11 @@ function VerifyOtpModal({
       </Modal>
 
       {/* Global Loading Overlay */}
-      {isLoading && (
+      {/* {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 z-[9999]">
           <Spin size="large" />
         </div>
-      )}
+      )} */}
     </>
   );
 }

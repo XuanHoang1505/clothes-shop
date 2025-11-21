@@ -20,8 +20,6 @@ function Home() {
     fetchProducts();
   }, []);
 
-  console.log(products);
-
   const brands = ["VERSACE", "ZARA", "GUCCI", "PRADA", "Calvin Klein"];
 
   const newArrivals = [
