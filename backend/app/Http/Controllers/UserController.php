@@ -7,6 +7,7 @@ use App\Http\Requests\User\UpdateUserRequest;
 use App\Services\Interfaces\UserServiceInterface;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 
 class UserController extends Controller
@@ -37,6 +38,24 @@ class UserController extends Controller
     }
     public function update(UpdateUserRequest $request, User $user)
     {
+        Log::info('Update User Request', [
+            'user_id' => $user->id,
+            'data' => $request->all(),
+            'validated' => $request->validated(),
+            'files' => $request->allFiles(),
+            'headers' => $request->headers->all(),
+            'ip' => $request->ip(),
+        ]);
+    
+        // Hoặc log chi tiết hơn
+        Log::info('Avatar file info', [
+            'has_avatar' => $request->hasFile('avatar'),
+            'avatar_info' => $request->file('avatar') ? [
+                'name' => $request->file('avatar')->getClientOriginalName(),
+                'size' => $request->file('avatar')->getSize(),
+                'mime' => $request->file('avatar')->getMimeType(),
+        ] : null
+    ]);
         $updatedUser = $this->userService->updateUser($user, $request->validated());
         return new UserResource($updatedUser);
     }
