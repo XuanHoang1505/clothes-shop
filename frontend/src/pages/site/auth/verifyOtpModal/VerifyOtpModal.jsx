@@ -2,10 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Modal, Spin } from "antd";
 import { ArrowLeftOutlined, LoadingOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
-import {
-  verifyEmailOtp,
-  resendOtp,
-} from "@/services/site/AuthService";
+import { verifyEmailOtp, resendOtp, verifyOtp } from "@/services/site/AuthService";
 
 function VerifyOtpModal({
   show,
@@ -13,6 +10,7 @@ function VerifyOtpModal({
   otpInfo,
   handleBack,
   handleShowLoginModal,
+  handleShowResetPasswordModal,
 }) {
   const [otpArray, setOtpArray] = useState(Array(6).fill(""));
   const [errors, setErrors] = useState({});
@@ -21,6 +19,7 @@ function VerifyOtpModal({
   const [isResendEnabled, setIsResendEnabled] = useState(false);
 
   const identifier = otpInfo?.identifier;
+  const type = otpInfo?.type;
   const inputRefs = useRef([]);
 
   // Countdown timer
@@ -99,9 +98,18 @@ function VerifyOtpModal({
     if (validateOtp(otp)) {
       try {
         setIsLoading(true);
-        const response = await verifyEmailOtp(identifier, otp);
-        toast.success(response.message || "Xác thực OTP thành công!");
-        handleShowLoginModal();
+        if (type === "SignUp") {
+          const response = await verifyEmailOtp(identifier, otp);
+          toast.success(response.message || "Xác thực OTP thành công!");
+          handleShowLoginModal();
+        } else if (type === "ForgotPassword") {
+          const response = await verifyOtp(identifier, otp);
+          toast.success(
+            response.message ||
+              "Xác thực OTP thành công! Vui lòng đặt lại mật khẩu."
+          );
+          handleShowResetPasswordModal({ identifier });
+        }
       } catch (error) {
         if (!error.response) {
           toast.error(

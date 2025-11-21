@@ -74,6 +74,19 @@ export const refreshToken = async () => {
   }
 };
 
+
+export const forgotPassword = async (email) => {
+  try {
+    const response = await axiosInstance.post(`${AUTH_URL}/forgot-password`, {
+      email,
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    throw error;
+  } 
+};
+
 // Gửi OTP
 export const sendOtp = async (identifier, type) => {
   try {
@@ -133,7 +146,7 @@ export const resetPassword = async (email, newPassword) => {
   try {
     const response = await axiosInstance.post(`${AUTH_URL}/reset-password`, {
       email,
-      newPassword,
+      new_password: newPassword,
     });
     return response.data;
   } catch (error) {

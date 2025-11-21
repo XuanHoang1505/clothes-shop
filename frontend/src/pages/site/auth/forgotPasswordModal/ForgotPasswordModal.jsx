@@ -3,13 +3,12 @@ import { Modal, Spin } from "antd";
 import { ArrowLeftOutlined, LoadingOutlined } from "@ant-design/icons";
 import { toast } from "react-toastify";
 
-import { sendOtp } from "../../../../services/site/AuthService";
+import { forgotPassword } from "@/services/site/AuthService";
 
 function ForgotPasswordModal({
   show,
   handleClose,
   handleBack,
-  handleShowVerifyOtpModal,
   handleForgotPassword,
 }) {
   const [email, setEmail] = useState("");
@@ -32,14 +31,10 @@ function ForgotPasswordModal({
   const handleSendOtp = async () => {
     if (validateEmail()) {
       try {
-        const type = "FORGOT_PASSWORD";
         setIsLoading(true);
-        // Gửi otp
-        const message = await sendOtp(email, type);
-        toast.success(message);
-
-        handleForgotPassword({ identifier: email, type });
-        handleShowVerifyOtpModal();
+        const response = await forgotPassword(email);
+        toast.success(response.message);
+        handleForgotPassword({ identifier: email, type: "ForgotPassword" });
       } catch (error) {
         console.error("Lỗi handleSendOTP:", error);
         if (error.response && error.response.data) {
@@ -148,11 +143,11 @@ function ForgotPasswordModal({
       </Modal>
 
       {/* Global Loading Overlay */}
-      {isLoading && (
+      {/* {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 z-[9999]">
           <Spin size="large" />
         </div>
-      )}
+      )} */}
     </>
   );
 }
