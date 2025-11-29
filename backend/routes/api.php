@@ -4,8 +4,10 @@ use App\Http\Controllers\AddressController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DiscountController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\ShippingFeeController;
 use App\Http\Controllers\UserController;
 
 Route::prefix('auth')->group(function () {
@@ -76,4 +78,19 @@ Route::prefix('admin/users')->group(function () {
     Route::delete('/{user}', [UserController::class, 'destroy']);
 });
 
+Route::post('/vnpay_payment',[CheckoutController::class,'vnpay_payment']);
+Route::get('/vnpay-return', [CheckoutController::class, 'vnpay_return']);
+Route::get('/orders/{order_code}', [CheckoutController::class, 'getOrder']);
+Route::post('/order-cod', [CheckoutController::class, 'createOrderCOD']);
 
+
+Route::get('/shipping-fees', [ShippingFeeController::class,'getAll']);
+
+Route::prefix('admin/shipping-fees')->group(function () {
+    Route::get('/', action: [ShippingFeeController::class, 'index']);
+    Route::post('/', [ShippingFeeController::class, 'store']);
+    Route::get('/lookup', [ShippingFeeController::class, 'lookup']);
+    Route::get('/{id}', [ShippingFeeController::class, 'show']);
+    Route::put('/{id}', [ShippingFeeController::class, 'update']);
+    Route::delete('/{id}', [ShippingFeeController::class, 'destroy']);
+});
