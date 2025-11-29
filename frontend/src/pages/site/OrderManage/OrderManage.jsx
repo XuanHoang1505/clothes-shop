@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Package, Calendar, User, MapPin, CreditCard, ChevronDown, ChevronUp, Search, Filter } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import { MessageSquare } from 'lucide-react';
 
 function OrderManagement() {
     const [orders, setOrders] = useState([]);
@@ -8,7 +10,7 @@ function OrderManagement() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilterMenu, setShowFilterMenu] = useState(false);
 
-
+    const navigate = useNavigate();
     useEffect(() => {
 
     }, []);
@@ -91,7 +93,7 @@ function OrderManagement() {
                 subtotal: 770000,
                 discount: 0,
                 deliveryFee: 15000,
-                status: 'processing',
+                status: 'confirmed',
                 createdAt: '2024-11-19T09:15:00Z'
             },
             {
@@ -151,24 +153,14 @@ function OrderManagement() {
     const getStatusColor = (status) => {
         const colors = {
             pending: 'bg-yellow-100 text-yellow-800',
-            processing: 'bg-blue-100 text-blue-800',
-            shipping: 'bg-purple-100 text-purple-800',
+            confirmed: 'bg-purple-100 text-purple-800',
             completed: 'bg-green-100 text-green-800',
             cancelled: 'bg-red-100 text-red-800'
         };
         return colors[status] || 'bg-gray-100 text-gray-800';
     };
 
-    const getStatusText = (status) => {
-        const texts = {
-            pending: 'Chờ xác nhận',
-            processing: 'Đang xử lý',
-            shipping: 'Đang giao',
-            completed: 'Hoàn thành',
-            cancelled: 'Đã hủy'
-        };
-        return texts[status] || status;
-    };
+
 
     const getPaymentMethodText = (method) => {
         const methods = {
@@ -201,8 +193,7 @@ function OrderManagement() {
     const statusCounts = {
         all: orders.length,
         pending: orders.filter(o => o.status === 'pending').length,
-        processing: orders.filter(o => o.status === 'processing').length,
-        shipping: orders.filter(o => o.status === 'shipping').length,
+        confirmed: orders.filter(o => o.status === 'confirmed').length,
         completed: orders.filter(o => o.status === 'completed').length,
         cancelled: orders.filter(o => o.status === 'cancelled').length
     };
@@ -258,7 +249,7 @@ function OrderManagement() {
                                             className={`w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center justify-between ${filterStatus === status ? 'bg-gray-100 font-semibold' : ''
                                                 }`}
                                         >
-                                            <span>{status === 'all' ? 'Tất cả' : getStatusText(status)}</span>
+                                            <span>{status === 'all' ? 'Tất cả' : status}</span>
                                             <span className="text-gray-500 text-sm">({count})</span>
                                         </button>
                                     ))}
@@ -278,7 +269,7 @@ function OrderManagement() {
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
-                                {status === 'all' ? 'Tất cả' : getStatusText(status)} ({count})
+                                {status === 'all' ? 'Tất cả' : status} ({count})
                             </button>
                         ))}
                     </div>
@@ -302,7 +293,7 @@ function OrderManagement() {
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="font-bold text-lg">{order.orderCode}</span>
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                                                        {getStatusText(order.status)}
+                                                        {order.status}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -437,10 +428,10 @@ function OrderManagement() {
                                             {order.status === 'pending' && (
                                                 <>
                                                     <button
-                                                        onClick={() => updateOrderStatus(order.id, 'processing')}
-                                                        className="flex-1 bg-black text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                                                        onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                                                        className="flex-1 bg-orange-200 text-orange-900 py-3 rounded-lg font-medium hover:bg-orange-300 transition-colors"
                                                     >
-                                                        Xác nhận đơn
+                                                        Cập nhật đơn hàng
                                                     </button>
                                                     <button
                                                         onClick={() => updateOrderStatus(order.id, 'cancelled')}
@@ -450,36 +441,46 @@ function OrderManagement() {
                                                     </button>
                                                 </>
                                             )}
-                                            {order.status === 'processing' && (
-                                                <button
-                                                    onClick={() => updateOrderStatus(order.id, 'shipping')}
-                                                    className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-                                                >
-                                                    Chuyển sang đang giao
-                                                </button>
-                                            )}
-                                            {order.status === 'shipping' && (
-                                                <button
-                                                    onClick={() => updateOrderStatus(order.id, 'completed')}
-                                                    className="flex-1 bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors"
-                                                >
-                                                    Hoàn thành đơn hàng
-                                                </button>
-                                            )}
-                                            {order.status === 'completed' && (
+
+                                            {order.status === 'confirmed' && (
                                                 <button
                                                     disabled
-                                                    className="flex-1 bg-gray-200 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed"
+                                                    className="flex-1 bg-blue-100 text-blue-600 py-3 rounded-lg font-medium cursor-not-allowed"
                                                 >
-                                                    Đơn hàng đã hoàn thành
+                                                    🚚 Đang giao hàng
                                                 </button>
                                             )}
+
+                                            {order.status === 'completed' && (
+                                                <>
+                                                    <button
+                                                        disabled
+                                                        className="flex-1 bg-green-100 text-green-600 py-3 rounded-lg font-medium cursor-not-allowed"
+                                                    >
+                                                        ✓ Đơn hàng hoàn thành
+                                                    </button>
+                                                    <button
+                                                        onClick={() => navigate('/write-comment-order', {
+                                                            state: {
+                                                                orderId: order.id,
+                                                                orderCode: order.orderCode,
+                                                                items: order.items
+                                                            }
+                                                        })}
+                                                        className="px-6 bg-yellow-500 text-white py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors flex items-center gap-2"
+                                                    >
+                                                        <MessageSquare size={18} />
+                                                        Write Comment
+                                                    </button>
+                                                </>
+                                            )}
+
                                             {order.status === 'cancelled' && (
                                                 <button
                                                     disabled
                                                     className="flex-1 bg-gray-200 text-gray-500 py-3 rounded-lg font-medium cursor-not-allowed"
                                                 >
-                                                    Đơn hàng đã hủy
+                                                    ✗ Đã hủy
                                                 </button>
                                             )}
                                         </div>

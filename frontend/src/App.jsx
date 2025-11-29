@@ -31,6 +31,7 @@ import "./css/style.css";
 import OrderManagement from "./pages/site/OrderManage/OrderManage";
 import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
 import CODReturn from "./pages/site/cod/CODReturn";
+import WriteCommentOrder from "./components/site/writeComment_true/WriteCommentOrder";
 
 function App() {
   const { user } = useContext(UserContext);
@@ -85,6 +86,7 @@ function App() {
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
               <Route path="product/:slug" element={<ProductDetailsPage />} />
+              <Route path="write-comment-order/:slug" element={<WriteCommentOrder />} />
             </Route>
 
             {/* OTHER PAGES */}
