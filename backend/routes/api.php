@@ -6,6 +6,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DiscountController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShippingFeeController;
 use App\Http\Controllers\UserController;
@@ -51,6 +52,10 @@ Route::prefix('products')->group(function () {
         Route::delete('/{id}', [ProductController::class, 'destroy']);
 
     // });
+});
+
+Route::prefix('orders')->group(function () {
+    Route::get('/by-email', [OrderController::class, 'getOrderByEmail']);
 });
 
 
