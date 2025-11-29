@@ -38,6 +38,7 @@ const TableManagement = ({
   onReject,
   onApprove,
   onEditProduct = () => {},
+
 }) => {
   const [visibleColumns, setVisibleColumns] = useState(
     defaultColumns.map((col) => col.key)
@@ -205,7 +206,7 @@ const TableManagement = ({
         );
 
       default:
-        return item[column.key] || (item[column.key] === 0 ? 0 : "Không có");
+        return item[column.key] || (item[column.key] === 0 ? 0 : "Null");
     }
   };
 
@@ -221,8 +222,8 @@ const TableManagement = ({
           ? 1
           : -1
         : compareA < compareB
-        ? 1
-        : -1;
+          ? 1
+          : -1;
     }
     return 0;
   });
@@ -403,18 +404,18 @@ const TableManagement = ({
         footer={
           !statusFunction?.isViewDetail
             ? [
-                <Button key="cancel" onClick={handleCloseModal}>
-                  Đóng
-                </Button>,
-                <Button
-                  key="submit"
-                  type="primary"
-                  loading={isLoading}
-                  onClick={handleSubmit}
-                >
-                  Lưu
-                </Button>,
-              ]
+              <Button key="cancel" onClick={handleCloseModal}>
+                Đóng
+              </Button>,
+              <Button
+                key="submit"
+                type="primary"
+                loading={isLoading}
+                onClick={handleSubmit}
+              >
+                Lưu
+              </Button>,
+            ]
             : null
         }
         width={800}

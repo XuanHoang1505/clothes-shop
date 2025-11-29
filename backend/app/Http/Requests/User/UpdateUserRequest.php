@@ -11,6 +11,7 @@ class UpdateUserRequest extends BaseRequest
         $userId = $this->route('user')?->id; // Lấy ID từ route model binding
 
         return [
+
             'fullName' => 'sometimes|nullable|string|max:255',
 
             'email' => "sometimes|nullable|email|max:255|unique:users,email,{$userId}",

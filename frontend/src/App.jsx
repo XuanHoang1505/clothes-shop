@@ -14,6 +14,9 @@ import Home from "@pages/site/home/Home";
 import UserManagement from "@pages/admin/userManagement/UserManagement";
 import ProductManagement from "./pages/admin/productManagement/ProductManagement";
 
+import VNPayReturn from "./pages/site/vnpay/VNPayReturn";
+
+
 import Page403 from "@/pages/site/page403/Page403";
 import Page500 from "@pages/page500/Page500";
 import Page404 from "@pages/site/page404/Page404";
@@ -31,9 +34,14 @@ import "./css/style.css";
 import ProductAdminPanel from "./pages/admin/productManagement/ProductAdminPanel";
 import ProductCreateForm from "./pages/admin/productManagement/ProductCreateForm";
 
-function App() {
+import OrderManagement from "./pages/site/OrderManage/OrderManage";
+import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
+import CODReturn from "./pages/site/cod/CODReturn";
 
+
+function App() {
   const { user } = useContext(UserContext);
+
   return (
     <>
       <Router>
@@ -45,6 +53,7 @@ function App() {
           }
         >
           <Routes>
+            {/* ADMIN */}
             <Route
               path="/admin/"
               element={
@@ -57,32 +66,47 @@ function App() {
               <Route path="products" element={<ProductManagement />} />
               <Route path="product/:slug" element={<ProductAdminPanel />} />
               <Route path="product/create" element={<ProductCreateForm />} />
+              <Route path="shipping-fees" element={<ShippingFeeManagement />} />
+
             </Route>
+
+            {/* SITE */}
             <Route path="/" element={<SiteLayout />}>
               <Route index element={<Home />} />
+
+              {/* ACCOUNT */}
               <Route
                 path="account"
                 element={
-                  <PrivateRoute roles={"USER"}>
+                  <PrivateRoute roles={["USER", "ADMIN"]}>
                     <AccountLayout />
                   </PrivateRoute>
                 }
               >
-                <Route index path="profile" element={<Profile />} />
-                <Route  path="update-info" element={<AccountInfo />} />
-                <Route path="change-password" element={<ChangePasswordPage user={user}/>} />
+                <Route path="profile" element={<Profile />} />
+                <Route path="update-info" element={<AccountInfo />} />
+                <Route path="my-order" element={<OrderManagement />} />
+                <Route
+                  path="change-password"
+                  element={<ChangePasswordPage user={user} />}
+                />
               </Route>
               <Route path="/shop" element={<ShopPage />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/product/:slug" element={<ProductDetailsPage />} />
             </Route>
+
+            {/* OTHER PAGES */}
+            <Route path="/vnpay-return" element={<VNPayReturn />} />
+            <Route path="/cod-return" element={<CODReturn />} />
             <Route path="/page403" element={<Page403 />} />
             <Route path="/page500" element={<Page500 />} />
             <Route path="*" element={<Page404 />} />
           </Routes>
         </Suspense>
       </Router>
+
       <ToastContainer
         position="top-right"
         autoClose={5000}
