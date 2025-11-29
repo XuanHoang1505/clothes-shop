@@ -4,18 +4,61 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Order\CreateOrderRequest;
 use App\Models\Order;
+use App\Notifications\SendMailOrderNotification;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
-class CheckoutController extends Controller
-{
+    class CheckoutController extends Controller
+    {
+        public function createOrderCOD(CreateOrderRequest $request)
+    {
+        $data = $request->validated();
+
+        try {
+            $order_code = 'ORD' . time() . rand(1000, 9999);
+
+            $order = Order::create([
+                'order_code' => $order_code,
+                'user_id' => Auth::id(),
+                'customer_info' => $data['customer_info'],
+                'shipping_address' => $data['shipping_address'],
+                'items' => $data['items'],
+                'payment_method' => 'cod',
+                'payment_status' => 'pending',
+                'order_status' => 'pending',
+                'subtotal' => $data['subtotal'],
+                'discount' => $data['discount'] ?? 0,
+                'delivery_fee' => $data['delivery_fee'],
+                'total' => $data['total_vnpay'],
+                'note' => $data['note'] ?? '',
+            ]);
+
+            // Gửi email luôn
+            $order->notify(new SendMailOrderNotification($order));
+
+            return response()->json([
+                'code' => '00',
+                'message' => 'Order created successfully',
+                'order_code' => $order_code
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'code' => '01',
+                'message' => 'Failed to create order',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Tạo đơn hàng và khởi tạo thanh toán VNPAY
      */
+
     public function vnpay_payment(CreateOrderRequest $request)
     {
-
         $data = $request->validated();
         
         // Tạo mã đơn hàng unique
@@ -61,6 +104,9 @@ class CheckoutController extends Controller
                 'updated_at' => now(),
             ]);
 
+            // ❌ XÓA DÒNG NÀY - Không gửi email khi tạo đơn
+            // Chỉ gửi email khi thanh toán thành công
+
         } catch (\Exception $e) {
             return response()->json([
                 'code' => '02',
@@ -75,7 +121,7 @@ class CheckoutController extends Controller
         $vnp_TmnCode = "G011CVNP";
         $vnp_HashSecret = "E4ZGGZTK5K153ANLDSBVXLNG0NEU6ZJJ";
 
-        $vnp_TxnRef = $order_code; // Sử dụng order_code làm mã giao dịch
+        $vnp_TxnRef = $order_code;
         $vnp_OrderInfo = 'Thanh toán đơn hàng ' . $order_code;
         $vnp_OrderType = 'billpayment';
         $vnp_Amount = $data['total_vnpay'] * 100;
@@ -167,7 +213,11 @@ class CheckoutController extends Controller
 
         if ($secureHash == $vnp_SecureHash) {
             if ($response_code == '00') {
-                // Thanh toán thành công
+
+            // Chỉ xử lý nếu đơn chưa paid
+            if ($order->payment_status !== 'paid') {
+
+                // Cập nhật đơn hàng
                 $order->update([
                     'payment_status' => 'paid',
                     'order_status' => 'confirmed',
@@ -181,13 +231,21 @@ class CheckoutController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                return response()->json([
-                    'code' => '00',
-                    'message' => 'Payment success',
-                    'order' => $order
-                ]);
+                // Gửi email 1 lần duy nhất
+                try {
+                    $order->notify(new SendMailOrderNotification($order));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send order confirmation email: ' . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'code' => '00',
+                'message' => 'Payment success',
+                'order' => $order
+            ]);
             } else {
-                // Thanh toán thất bại
+                // Thanh toán thất bại - Không gửi email
                 $order->update([
                     'payment_status' => 'failed',
                     'order_status' => 'cancelled',
@@ -197,6 +255,8 @@ class CheckoutController extends Controller
                     'updated_at' => now(),
                 ]);
 
+                Log::warning('Payment failed for order: ' . $order_code . ' - Response code: ' . $response_code);
+
                 return response()->json([
                     'code' => '01',
                     'message' => 'Payment failed',
@@ -204,6 +264,8 @@ class CheckoutController extends Controller
                 ]);
             }
         } else {
+            Log::error('Invalid VNPAY signature for order: ' . $order_code);
+            
             return response()->json([
                 'code' => '97',
                 'message' => 'Invalid signature'

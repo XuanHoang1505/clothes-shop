@@ -8,6 +8,12 @@ function OrderManagement() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilterMenu, setShowFilterMenu] = useState(false);
 
+
+    useEffect(() => {
+
+    }, []);
+
+
     useEffect(() => {
         // Giả lập load đơn hàng từ API/localStorage
         // Trong thực tế, bạn sẽ fetch từ backend
@@ -203,36 +209,14 @@ function OrderManagement() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Top Banner */}
-            <div className="bg-black text-white text-center py-2 px-4 text-sm relative">
-                Sign up and get 20% off to your first order. <span className="underline font-medium cursor-pointer">Sign Up Now</span>
-                <button className="absolute right-4 top-1/2 -translate-y-1/2">
-                    <X size={16} />
-                </button>
-            </div>
-
-            {/* Header */}
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <h1 className="text-2xl font-bold">SHOP.CO</h1>
-                </div>
-            </div>
-
-            {/* Breadcrumb */}
-            <div className="bg-white border-b">
-                <div className="max-w-7xl mx-auto px-4 py-4 text-sm text-gray-600">
-                    <span>Home</span> <span className="mx-2">›</span>
-                    <span className="text-black">Order Management</span>
-                </div>
-            </div>
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-3xl font-bold">QUẢN LÝ ĐÔN HÀNG</h2>
+                    <h2 className="text-3xl font-bold">ORDER MANAGEMENT</h2>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Package size={18} />
-                        <span>{filteredOrders.length} đơn hàng</span>
+                        <span>{filteredOrders.length} orders</span>
                     </div>
                 </div>
 
@@ -290,8 +274,8 @@ function OrderManagement() {
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === status
-                                        ? 'bg-black text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    ? 'bg-black text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
                                 {status === 'all' ? 'Tất cả' : getStatusText(status)} ({count})
@@ -507,12 +491,6 @@ function OrderManagement() {
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="bg-gray-100 py-8 mt-16">
-                <div className="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
-                    © 2024 SHOP.CO. All rights reserved.
-                </div>
-            </div>
         </div>
     );
 }

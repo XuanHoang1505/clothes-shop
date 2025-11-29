@@ -14,7 +14,7 @@ class CreateDiscountRequest extends BaseRequest
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('discounts', 'code')->ignore($this->id) // ignore khi update
+                Rule::unique('discounts', 'code')->ignore($this->id) // ignore when updating
             ],
 
             'description' => ['nullable', 'string', 'max:255'],
@@ -42,14 +42,14 @@ class CreateDiscountRequest extends BaseRequest
     public function messages()
     {
         return [
-            'code.required' => 'Mã giảm giá không được để trống.',
-            'code.unique' => 'Mã giảm giá này đã tồn tại.',
-            'type.required' => 'Vui lòng chọn kiểu giảm giá.',
-            'value.required' => 'Vui lòng nhập giá trị giảm.',
-            'value.min' => 'Giá trị giảm phải lớn hơn 0.',
-            'start_date.required' => 'Vui lòng chọn ngày bắt đầu.',
-            'end_date.required' => 'Vui lòng chọn ngày kết thúc.',
-            'end_date.after_or_equal' => 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.',
+            'code.required' => 'The discount code is required.',
+            'code.unique' => 'This discount code already exists.',
+            'type.required' => 'Please select a discount type.',
+            'value.required' => 'Please enter a discount value.',
+            'value.min' => 'The discount value must be greater than 0.',
+            'start_date.required' => 'Please select a start date.',
+            'end_date.required' => 'Please select an end date.',
+            'end_date.after_or_equal' => 'The end date must be after or equal to the start date.',
         ];
     }
 }

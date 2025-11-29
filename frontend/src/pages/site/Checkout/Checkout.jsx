@@ -5,10 +5,11 @@ function Checkout() {
     const [cartItems, setCartItems] = useState([]);
     const [appliedDiscount, setAppliedDiscount] = useState(null);
     const [discount, setDiscount] = useState(0);
+    const [deliveryFee, setDeliveryFee] = useState(15000);
+    const [total, setTotal] = useState(0);
 
     // Customer Information
     const [fullName, setFullName] = useState('');
-    const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
 
     // Shipping Address
@@ -18,7 +19,7 @@ function Checkout() {
     const [note, setNote] = useState('');
 
     // Payment Information
-    const [paymentMethod, setPaymentMethod] = useState('cod'); // cod, card, bank
+    const [paymentMethod, setPaymentMethod] = useState('cod');
     const [cardNumber, setCardNumber] = useState('');
     const [cardName, setCardName] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
@@ -26,6 +27,8 @@ function Checkout() {
 
     const [isProcessing, setIsProcessing] = useState(false);
 
+    const userDetail = JSON.parse(localStorage.getItem("userDetail") || "{}");
+    const email = userDetail.email || "";
 
     useEffect(() => {
         const saved = localStorage.getItem("shippingAddress");
@@ -37,38 +40,33 @@ function Checkout() {
         }
     }, []);
 
-
     useEffect(() => {
         // Load cart from localStorage
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         setCartItems(cart);
 
-        // Load discount if applied
-        const savedDiscount = JSON.parse(localStorage.getItem('appliedDiscount'));
-        if (savedDiscount) {
-            setAppliedDiscount(savedDiscount);
-            setDiscount(parseFloat(localStorage.getItem('discountAmount')) || 0);
-        }
+        // Load address + discount + total from "detailCart"
+        const detail = JSON.parse(localStorage.getItem("detailCart"));
 
-        // Load address from localStorage if saved
-        const savedAddress = JSON.parse(localStorage.getItem('shippingAddress'));
-        if (savedAddress) {
-            setHouseNumber(savedAddress.houseNumber || '');
-            setProvince(savedAddress.province || '');
-            setWard(savedAddress.ward || '');
+        if (detail) {
+            setHouseNumber(detail.houseNumber || "");
+            setProvince(detail.province || "");
+            setWard(detail.ward || "");
+            setDiscount(detail.discountAmount || 0);
+            setDeliveryFee(detail.deliveryFee || 0);
+            setAppliedDiscount(detail.discountAmount > 0 ? { value: detail.discountAmount } : null);
+            setTotal(detail.total || 0);
         }
     }, []);
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const deliveryFee = 15000;
-    const total = subtotal - discount + deliveryFee;
 
     const formatNumber = (num) => {
         return new Intl.NumberFormat('vi-VN').format(num);
     };
 
     const isFormValid = () => {
-        const basicInfoValid = fullName && email && phone && houseNumber && province && ward;
+        const basicInfoValid = fullName && phone && houseNumber && province && ward;
 
         if (paymentMethod === 'card') {
             return basicInfoValid && cardNumber && cardName && expiryDate && cvv;
@@ -85,45 +83,7 @@ function Checkout() {
 
         setIsProcessing(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            const orderData = {
-                customer: { fullName, email, phone },
-                address: { houseNumber, province, ward, note },
-                items: cartItems,
-                payment: {
-                    method: paymentMethod,
-                    amount: total
-                },
-                discount: appliedDiscount,
-                createdAt: new Date().toISOString()
-            };
-
-            console.log('Order placed:', orderData);
-
-            // Clear cart
-            localStorage.removeItem('cart');
-            localStorage.removeItem('appliedDiscount');
-            localStorage.removeItem('discountAmount');
-
-            alert('Đặt hàng thành công! Cảm ơn bạn đã mua hàng.');
-            setIsProcessing(false);
-
-            // Redirect to success page or home
-            window.location.href = '/';
-        }, 2000);
-    };
-
-    const handleVNPayPayment = async (amount) => {
-        if (!isFormValid()) {
-            alert('Vui lòng điền đầy đủ thông tin trước khi thanh toán!');
-            return;
-        }
-
-        setIsProcessing(true); // Thêm loading state
-
         try {
-            // Chuẩn bị dữ liệu đơn hàng theo format controller yêu cầu
             const orderData = {
                 customer_info: {
                     fullName: fullName,
@@ -137,7 +97,7 @@ function Checkout() {
                     note: note || ''
                 },
                 items: cartItems.map(item => ({
-                    product_id: item.id || item._id || '', // ID sản phẩm
+                    product_id: item.id || item._id || '',
                     name: item.name,
                     quantity: item.quantity,
                     price: item.price,
@@ -148,7 +108,75 @@ function Checkout() {
                 subtotal: subtotal,
                 discount: discount,
                 delivery_fee: deliveryFee,
-                total_vnpay: total, // Sử dụng total thay vì amount
+                total_vnpay: total,
+                note: note || '',
+                payment_method: "cod"
+            };
+
+            const response = await fetch('http://127.0.0.1:8000/api/order-cod', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            const data = await response.json();
+
+            if (data.code === '00') {
+                // Clear cart
+                localStorage.removeItem('cart');
+                localStorage.removeItem('appliedDiscount');
+                localStorage.removeItem('discountAmount');
+                localStorage.removeItem('detailCart');
+
+                window.location.href = "/cod-return?order=" + data.order_code;
+            } else {
+                alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
+            }
+        } catch (error) {
+            console.error("Lỗi đặt hàng COD:", error);
+            alert('Không thể kết nối tới server!');
+        }
+
+        setIsProcessing(false);
+    };
+
+    const handleVNPayPayment = async (amount) => {
+        if (!isFormValid()) {
+            alert('Vui lòng điền đầy đủ thông tin trước khi thanh toán!');
+            return;
+        }
+
+        setIsProcessing(true);
+
+        try {
+            const orderData = {
+                customer_info: {
+                    fullName: fullName,
+                    email: email,
+                    phone: phone
+                },
+                shipping_address: {
+                    houseNumber: houseNumber,
+                    province: province,
+                    ward: ward,
+                    note: note || ''
+                },
+                items: cartItems.map(item => ({
+                    product_id: item.id || item._id || '',
+                    name: item.name,
+                    quantity: item.quantity,
+                    price: item.price,
+                    size: item.size || null,
+                    color: item.color || null,
+                    image: item.image || null
+                })),
+                subtotal: subtotal,
+                discount: discount,
+                delivery_fee: deliveryFee,
+                total_vnpay: total,
                 note: note || ''
             };
 
@@ -164,11 +192,8 @@ function Checkout() {
             const data = await response.json();
 
             if (data.code === '00' && data.payment_url) {
-                // Lưu order_code để tracking sau khi thanh toán
                 localStorage.setItem('current_order_code', data.order_code);
                 localStorage.setItem('current_order_id', data.order_id);
-
-                // Redirect sang VNPAY
                 window.location.href = data.payment_url;
             } else {
                 alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại!');
@@ -232,29 +257,16 @@ function Checkout() {
                             </div>
 
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Họ và tên <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={fullName}
-                                        onChange={(e) => setFullName(e.target.value)}
-                                        placeholder="Nguyễn Văn A"
-                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                                    />
-                                </div>
-
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Email <span className="text-red-500">*</span>
+                                            Họ và tên <span className="text-red-500">*</span>
                                         </label>
                                         <input
-                                            type="email"
-                                            value={email}
-                                            onChange={(e) => setEmail(e.target.value)}
-                                            placeholder="example@email.com"
+                                            type="text"
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
+                                            placeholder="Nguyễn Văn A"
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                                         />
                                     </div>
@@ -365,91 +377,6 @@ function Checkout() {
                                     </div>
                                 </label>
 
-                                {/* Card Option */}
-                                <label className="flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                    <input
-                                        type="radio"
-                                        name="payment"
-                                        value="card"
-                                        checked={paymentMethod === 'card'}
-                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                        className="mt-1"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="font-semibold">Thẻ tín dụng/Ghi nợ</div>
-                                        <p className="text-sm text-gray-600 mt-1">
-                                            Thanh toán bằng thẻ Visa, Mastercard, JCB
-                                        </p>
-                                    </div>
-                                </label>
-
-                                {/* Card Details Form */}
-                                {paymentMethod === 'card' && (
-                                    <div className="space-y-4 mt-4 p-4 bg-gray-50 rounded-lg">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Số thẻ <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={cardNumber}
-                                                onChange={(e) => setCardNumber(e.target.value)}
-                                                placeholder="1234 5678 9012 3456"
-                                                maxLength="19"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Tên trên thẻ <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={cardName}
-                                                onChange={(e) => setCardName(e.target.value)}
-                                                placeholder="NGUYEN VAN A"
-                                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Ngày hết hạn <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={expiryDate}
-                                                    onChange={(e) => setExpiryDate(e.target.value)}
-                                                    placeholder="MM/YY"
-                                                    maxLength="5"
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    CVV <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={cvv}
-                                                    onChange={(e) => setCvv(e.target.value)}
-                                                    placeholder="123"
-                                                    maxLength="3"
-                                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                                            <Lock size={16} />
-                                            <span>Thông tin thẻ được mã hóa và bảo mật</span>
-                                        </div>
-                                    </div>
-                                )}
-
                                 {/* Bank Transfer Option */}
                                 <label className="flex items-start gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                                     <input
@@ -475,7 +402,7 @@ function Checkout() {
 
                                                 <button
                                                     onClick={() => handleVNPayPayment(total)}
-                                                    disabled={isProcessing}
+                                                    disabled={isProcessing || !isFormValid()}
                                                     className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     {isProcessing ? (
@@ -556,29 +483,42 @@ function Checkout() {
                                 </div>
                             </div>
 
-                            {/* Place Order Button */}
-                            <button
-                                onClick={handlePlaceOrder}
-                                disabled={!isFormValid() || isProcessing}
-                                className="w-full mt-6 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                            >
-                                {isProcessing ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Đang xử lý...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Lock size={18} />
-                                        Đặt hàng
-                                    </>
-                                )}
-                            </button>
+                            {/* Place Order Button - CHỈ HIỂN THỊ KHI KHÔNG PHẢI VNPAY */}
+                            {paymentMethod !== 'bank' && (
+                                <>
+                                    <button
+                                        onClick={handlePlaceOrder}
+                                        disabled={!isFormValid() || isProcessing}
+                                        className="w-full mt-6 bg-black text-white py-4 rounded-full font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        {isProcessing ? (
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                Đang xử lý...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Lock size={18} />
+                                                Đặt hàng
+                                            </>
+                                        )}
+                                    </button>
 
-                            {!isFormValid() && (
-                                <p className="text-xs text-gray-500 text-center mt-3">
-                                    Vui lòng điền đầy đủ thông tin để đặt hàng
-                                </p>
+                                    {!isFormValid() && (
+                                        <p className="text-xs text-gray-500 text-center mt-3">
+                                            Vui lòng điền đầy đủ thông tin để đặt hàng
+                                        </p>
+                                    )}
+                                </>
+                            )}
+
+                            {/* Message khi chọn VNPAY */}
+                            {paymentMethod === 'bank' && (
+                                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <p className="text-sm text-blue-700 text-center">
+                                        👈 Vui lòng nhấn nút "Thanh toán ngay với VNPAY" bên trái để tiếp tục
+                                    </p>
+                                </div>
                             )}
 
                             <p className="text-xs text-gray-500 text-center mt-4">

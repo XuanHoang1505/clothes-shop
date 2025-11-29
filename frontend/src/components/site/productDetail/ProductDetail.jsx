@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Minus, Plus } from "lucide-react";
 import ProductService from "@/services/site/ProductService";
 import { formatNumber } from "@/utils/Formatter";
+import { COLOR_MAP } from "@/constants/colors";
 
 
 function ProductDetail({ productSlug: propSlug }) {
@@ -20,9 +21,6 @@ function ProductDetail({ productSlug: propSlug }) {
     // Parse product data and ensure all fields are properly formatted
     const parseProductData = (data) => {
         if (!data) return null;
-
-        console.log("Converted data:", data);
-
         // Extract and format all fields
         return {
             id: data.id || '',
@@ -93,12 +91,8 @@ function ProductDetail({ productSlug: propSlug }) {
             try {
                 const res = await ProductService.getProductBySlug(productSlug);
                 const data = res.data || res;
-                console.log("=== RAW DATA FROM API ===", data);
 
                 const parsedProduct = parseProductData(data);
-                console.log("=== PARSED PRODUCT ===");
-                console.log(parsedProduct);
-                console.log("======================");
 
                 setProduct(parsedProduct);
             } catch (error) {
@@ -110,11 +104,21 @@ function ProductDetail({ productSlug: propSlug }) {
 
     useEffect(() => {
         if (product && product.available_colors && product.available_sizes) {
-            setSelectedColor(product.available_colors[0]?.name || null);
-            setSelectedSize(product.available_sizes[0] || null);
-            setSelectedVariant(product.variants?.[0] || null);
+            const defaultColor = product.available_colors[0]?.name || null;
+            const defaultSize = product.available_sizes[0] || null;
+
+            setSelectedColor(defaultColor);
+            setSelectedSize(defaultSize);
+
+            // 🔥 Tìm đúng variant có color + size
+            const defaultVariant = product.variants?.find(
+                v => v.color === defaultColor && v.size === defaultSize
+            ) || null;
+
+            setSelectedVariant(defaultVariant);
         }
     }, [product]);
+
 
     useEffect(() => {
         if (!product || !product.variants) return;
@@ -134,31 +138,39 @@ function ProductDetail({ productSlug: propSlug }) {
     };
 
     const handleAddToCart = () => {
+        // Giá ưu tiên lấy từ variant (nếu có)
+        const variantPrice = selectedVariant?.price ?? product.price;
+
         const cartItem = {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: variantPrice,
             image: product.images?.[0] || '',
-            quantity: quantity, // ✅ lấy đúng số lượng người chọn
+            quantity: Number(quantity) || 1,
             variant: selectedVariant ? {
-                size: selectedVariant.size || null,
-                color: selectedVariant.color || null
+                size: selectedVariant.size,
+                color: selectedVariant.color
             } : null
         };
 
         const existingCart = JSON.parse(localStorage.getItem('cart')) || [];
 
-        // ✅ So sánh theo id + size + color
-        const existingItemIndex = existingCart.findIndex(item =>
-            item.id === cartItem.id &&
-            (item.variant?.size === cartItem.variant?.size) &&
-            (item.variant?.color === cartItem.variant?.color)
-        );
+        // Hàm chuẩn hóa để tránh lỗi chữ hoa / thường
+        const normalize = (v) => (v ?? '').toString().trim().toLowerCase();
+
+        // ⭐ Tìm item giống hệt: id + size + color
+        const existingItemIndex = existingCart.findIndex(item => {
+            const sameId = item.id === cartItem.id;
+            const sameSize = normalize(item.variant?.size) === normalize(cartItem.variant?.size);
+            const sameColor = normalize(item.variant?.color) === normalize(cartItem.variant?.color);
+            return sameId && sameSize && sameColor;
+        });
 
         if (existingItemIndex !== -1) {
-            // ✅ tăng đúng số lượng đã chọn, không phải +1 cứng
+            // ⭐ Nếu đã tồn tại —> cộng thêm số lượng
             existingCart[existingItemIndex].quantity += cartItem.quantity;
         } else {
+            // ⭐ Nếu chưa tồn tại —> thêm mới
             existingCart.push(cartItem);
         }
 
@@ -166,8 +178,6 @@ function ProductDetail({ productSlug: propSlug }) {
 
         alert("✅ Added to cart!");
     };
-
-
 
 
 
@@ -182,6 +192,8 @@ function ProductDetail({ productSlug: propSlug }) {
     const images = product.images || [];
     const currentStock = selectedVariant?.stock || product.stock || 0;
     const displayImages = images.length > 0 ? images : ['https://placehold.co/600x600?text=No+Image'];
+
+    const displayPrice = selectedVariant?.price ?? product.price ?? 0;
 
     return (
         <div className="min-h-screen bg-white">
@@ -244,11 +256,6 @@ function ProductDetail({ productSlug: propSlug }) {
                                         }
                                     }}
                                 />
-                                {product.on_sale && product.discount_percentage > 0 && (
-                                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3.5 py-1.5 rounded-full font-semibold text-xs">
-                                        -{product.discount_percentage}%
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
@@ -284,21 +291,15 @@ function ProductDetail({ productSlug: propSlug }) {
                         <div className="mb-5">
                             <div className="flex items-center gap-3 flex-wrap">
                                 <span className="text-3xl font-bold text-gray-900">
-                                    {formatNumber(product.price)}
+                                    {formatNumber(displayPrice)}
                                 </span>
-                                {product.compare_price && (
+                                {product.compare_price && displayPrice < product.compare_price && (
                                     <>
                                         <span className="text-2xl text-gray-400 line-through font-medium">
                                             {formatNumber(product.compare_price)}
                                         </span>
                                         <span className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">
-                                            -
-                                            {Math.round(
-                                                ((product.compare_price - product.price) /
-                                                    product.compare_price) *
-                                                100
-                                            )}
-                                            %
+                                            -{Math.round(((product.compare_price - displayPrice) / product.compare_price) * 100)}%
                                         </span>
                                     </>
                                 )}
@@ -320,7 +321,9 @@ function ProductDetail({ productSlug: propSlug }) {
                                         <button
                                             key={`${color.name}-${idx}`}
                                             onClick={() => setSelectedColor(color.name)}
-                                            style={{ backgroundColor: color.hex || '#6B7280' }}
+                                            style={{
+                                                backgroundColor: COLOR_MAP[color?.name?.toLowerCase()] || "#6B7280"
+                                            }}
                                             className={`w-10 h-10 rounded-full transition-all ${selectedColor === color.name
                                                 ? "ring-2 ring-offset-2 ring-gray-900"
                                                 : "ring-1 ring-gray-300 hover:ring-gray-400"

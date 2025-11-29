@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import { UserContext } from "@/contexts/UserContext";
 import DynamicBreadcrumb from "@/components/site/breadcrumb/Breadcrumb";
-import { 
-  FacebookFilled, 
-  InstagramFilled, 
-  TwitterCircleFilled, 
+import {
+  FacebookFilled,
+  InstagramFilled,
+  TwitterCircleFilled,
   YoutubeFilled,
   EditOutlined,
   MailOutlined,
@@ -45,7 +45,7 @@ function Profile() {
                     {user?.fullName || "Nguyễn Xuân Hoàng"}
                   </h1>
                   <p className="text-gray-600 mb-4">Người dùng</p>
-                  
+
                   {/* Contact Info */}
                   <div className="flex flex-col sm:flex-row gap-4 mb-6 text-gray-700">
                     <div className="flex items-center justify-center md:justify-start gap-2">
@@ -96,8 +96,8 @@ function Profile() {
           <div className="mt-6 bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Giới thiệu</h2>
             <p className="text-gray-600 leading-relaxed">
-              Tôi là một tác giả đam mê viết lách và chia sẻ kiến thức. 
-              Chuyên về các chủ đề công nghệ, thể thao và đời sống. 
+              Tôi là một tác giả đam mê viết lách và chia sẻ kiến thức.
+              Chuyên về các chủ đề công nghệ, thể thao và đời sống.
               Luôn cập nhật những tin tức mới nhất và xu hướng nổi bật.
             </p>
           </div>
@@ -106,7 +106,7 @@ function Profile() {
           <div className="mt-6 bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Hoạt động gần đây</h2>
             <div className="space-y-4">
-              
+
               <div className="flex items-start gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
                 <div className="flex-1">

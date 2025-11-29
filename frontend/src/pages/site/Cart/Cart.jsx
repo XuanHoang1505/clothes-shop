@@ -3,13 +3,13 @@ import { X, Minus, Plus, Tag, ArrowRight, Mail, MapPin } from 'lucide-react';
 import { formatNumber } from "@/utils/Formatter";
 import DiscountService from '@/services/site/DiscountService';
 import AddressService from '@/services/site/AddressService';
+import ShippingFeeService from '@/services/admin/ShippingFeeService';
 import { useNavigate } from "react-router-dom";
 
 function Cart() {
     const [cartItems, setCartItems] = useState([])
     const [promoCode, setPromoCode] = useState('');
     const [email, setEmail] = useState('');
-    const [discount, setDiscount] = useState(0);
     const [appliedDiscount, setAppliedDiscount] = useState(null);
 
     // Address states
@@ -17,42 +17,113 @@ function Cart() {
     const [wards, setWards] = useState([]);
     const [selectedProvince, setSelectedProvince] = useState('');
     const [selectedWard, setSelectedWard] = useState('');
-    const [isLoadingWards, setIsLoadingWards] = useState(false);
     const [houseNumber, setHouseNumber] = useState("");
+
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [allFees, setAllFees] = useState([]);
+    // Shipping fee states
+    const [deliveryFee, setDeliveryFee] = useState(0);
+    const [isLoadingShippingFee, setIsLoadingShippingFee] = useState(false);
+    const [shippingFeeError, setShippingFeeError] = useState(null);
+    const [isLoadingWards, setIsLoadingWards] = useState(false);
+
 
     const navigate = useNavigate();
 
     // Lấy danh sách tỉnh khi load
+    // Lấy danh sách province khi load trang
     useEffect(() => {
-        AddressService.getProvinces().then((data) => {
+        ShippingFeeService.getAll().then((res) => {
+            if (res?.data) {
+                setAllFees(res.data);
 
-            if (data) setProvinces(data);
+                // Lấy danh sách tỉnh unique
+                const provinces = [
+                    ...new Map(
+                        res.data.map(item => [item.province_code, {
+                            code: item.province_code,
+                            name: item.province_name
+                        }])
+                    ).values()
+                ];
+
+                setProvinces(provinces);
+            }
         });
     }, []);
 
-
-
+    // Load wards khi chọn province
     useEffect(() => {
-        if (!selectedProvince) return;
-        AddressService.getWards(selectedProvince).then((data) => {
-            setWards(data);
-        });
-    }, [selectedProvince]);
+        if (!selectedProvince) {
+            setWards([]);
+            setSelectedWard('');
+            return;
+        }
 
+        setIsLoadingWards(true);
 
+        const filteredWards = allFees
+            .filter(item => item.province_code === selectedProvince)
+            .map(item => ({
+                code: item.ward_code,
+                name: item.ward_name
+            }))
+            .filter(item => item.code); // tránh ward null
+
+        setWards(filteredWards);
+
+        setIsLoadingWards(false);
+    }, [selectedProvince, allFees]);
+
+    // Lookup shipping fee khi có đủ thông tin địa chỉ
+    useEffect(() => {
+        if (!selectedProvince || !selectedWard) {
+            setDeliveryFee(0);
+            setShippingFeeError(null);
+            return;
+        }
+
+        setIsLoadingShippingFee(true);
+
+        try {
+            const matchedWard = allFees.find(
+                f => f.province_code === selectedProvince && f.ward_code === selectedWard
+            );
+
+            if (matchedWard) {
+                setDeliveryFee(matchedWard.fee);
+            } else {
+                // fallback chỉ theo tỉnh
+                const matchedProvince = allFees.find(
+                    f => f.province_code === selectedProvince && !f.ward_code
+                );
+
+                if (matchedProvince) {
+                    setDeliveryFee(matchedProvince.fee);
+                } else {
+                    setDeliveryFee(15000);
+                    setShippingFeeError("Không tìm thấy phí ship, áp dụng mặc định.");
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            setDeliveryFee(15000);
+            setShippingFeeError("Lỗi tìm phí ship.");
+        } finally {
+            setIsLoadingShippingFee(false);
+        }
+    }, [selectedProvince, selectedWard, allFees]);
 
 
     const getCart = () => {
         const cart = JSON.parse(localStorage.getItem('cart'));
-        return cart || []; // nếu null thì trả về mảng rỗng
+        return cart || [];
     };
-
 
     useEffect(() => {
         const cart = getCart();
         setCartItems(cart);
-    }, []); // chạy 1 lần khi component load
-
+    }, []);
 
     const updateQuantity = (id, delta, variant) => {
         setCartItems(prevItems => {
@@ -73,77 +144,63 @@ function Cart() {
         });
     };
 
-
     const removeItem = (id) => {
         setCartItems(items => {
             const updated = items.filter(item => item.id !== id);
-
-            // Cập nhật lại localStorage
             localStorage.setItem("cart", JSON.stringify(updated));
-
             return updated;
         });
     };
 
-
     const handleApplyPromo = async () => {
         const code = promoCode.trim().toUpperCase();
         if (!code) {
-            alert("Vui lòng nhập mã giảm giá!");
+            alert("Please enter a discount code!");
             return;
         }
 
         try {
-            // Gọi API lấy thông tin mã giảm giá
             const res = await DiscountService.getDiscountByCode(code);
-
-            // Nếu API trả về dạng resource Laravel: { data: {...} }
             const discountData = res.data ?? res;
 
-            // Kiểm tra trạng thái mã
             if (!discountData.is_active) {
-                alert("Mã giảm giá đã hết hạn hoặc không còn hiệu lực!");
+                alert("This discount code is inactive or expired!");
                 return;
             }
 
-            // Kiểm tra giá trị đơn hàng tối thiểu
             if (subtotal < discountData.min_order_value) {
                 alert(
-                    `Đơn hàng tối thiểu ${discountData.min_order_value.toLocaleString()} đ mới được áp dụng mã này.`
+                    `A minimum order value of ${discountData.min_order_value.toLocaleString()} VND is required to apply this discount code.`
                 );
                 return;
             }
 
-            let discountAmount = 0;
+            let newAmount = 0;
 
-            // Tính giảm
             if (discountData.type === "percent") {
-                discountAmount = (subtotal * discountData.value) / 100;
+                newAmount = (subtotal * discountData.value) / 100;
             } else if (discountData.type === "fixed") {
-                discountAmount = discountData.value;
+                newAmount = discountData.value;
             }
 
-            // Giới hạn giảm tối đa
-            discountAmount = Math.min(discountAmount, discountData.max_discount);
+            newAmount = Math.min(newAmount, discountData.max_discount);
 
-            setDiscount(discountAmount);
+            setDiscountAmount(newAmount);
             setAppliedDiscount(discountData);
 
-            alert(`Áp dụng mã thành công! Giảm ${discountAmount.toLocaleString()} đ`);
+            alert(`Applied successfully! You saved ${newAmount.toLocaleString()} VND`);
 
         } catch (error) {
-            alert("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
+            alert("Invalid or expired discount code!");
             console.error(error);
         }
     };
-
 
     // Kiểm tra địa chỉ đã đầy đủ chưa
     const isAddressComplete = houseNumber.trim() && selectedProvince && selectedWard;
 
     const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const deliveryFee = 15;
-    const total = subtotal - discount + deliveryFee;
+    const total = subtotal - discountAmount + deliveryFee;
 
     const handleGoToCheckout = () => {
         const provinceObj = provinces.find(p => p.code === selectedProvince);
@@ -153,13 +210,16 @@ function Cart() {
             houseNumber,
             province: provinceObj?.name || "",
             ward: wardObj?.name || "",
+            province_code: selectedProvince,
+            ward_code: selectedWard,
+            discountAmount: discountAmount || 0,
+            deliveryFee: deliveryFee || 0,
+            total: total || 0,
         };
 
-        localStorage.setItem("shippingAddress", JSON.stringify(address));
-
+        localStorage.setItem("detailCart", JSON.stringify(address));
         navigate("/checkout");
     };
-
 
     return (
         <div className="min-h-screen bg-white">
@@ -179,7 +239,7 @@ function Cart() {
                         <div className="space-y-4">
                             {cartItems.length === 0 ? (
                                 <div className="text-center py-12 text-gray-500 border rounded-lg">
-                                    Giỏ hàng của bạn đang trống
+                                    Your cart is empty
                                 </div>
                             ) : (
                                 cartItems.map((item, index) => (
@@ -193,8 +253,8 @@ function Cart() {
                                             <div className="flex justify-between items-start mb-2">
                                                 <div>
                                                     <h3 className="font-semibold text-lg">{item.name}</h3>
-                                                    <p className="text-sm text-gray-600">Size: {item.size || 'N/A'}</p>
-                                                    <p className="text-sm text-gray-600">Color: {item.color || 'N/A'}</p>
+                                                    <p className="text-sm text-gray-600">Size: {item.variant.size || 'N/A'}</p>
+                                                    <p className="text-sm text-gray-600">Color: {item.variant.color || 'N/A'}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => removeItem(item.id, item.variant)}
@@ -257,7 +317,10 @@ function Cart() {
                                         </label>
                                         <select
                                             value={selectedProvince}
-                                            onChange={(e) => setSelectedProvince(e.target.value)}
+                                            onChange={(e) => {
+                                                setSelectedProvince(e.target.value);
+                                                setSelectedWard(''); // Reset ward khi đổi province
+                                            }}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white"
                                         >
                                             <option value="">Chọn Tỉnh/Thành phố</option>
@@ -277,13 +340,10 @@ function Cart() {
                                         <select
                                             value={selectedWard}
                                             onChange={(e) => setSelectedWard(e.target.value)}
-                                            disabled={!selectedProvince || isLoadingWards}
+                                            disabled={!selectedProvince || wards.length === 0}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
-                                            <option value="">
-                                                {isLoadingWards ? "Đang tải..." : "Chọn Phường/Xã"}
-                                            </option>
-
+                                            <option value="">Chọn Phường/Xã</option>
                                             {wards.map((ward) => (
                                                 <option key={ward.code} value={ward.code}>
                                                     {ward.name}
@@ -298,8 +358,26 @@ function Cart() {
                                         )}
                                     </div>
 
+                                    {/* Loading shipping fee */}
+                                    {isLoadingShippingFee && (
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                                            <span className="text-blue-600 text-sm">
+                                                🔄 Đang tính phí giao hàng...
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Shipping fee error */}
+                                    {shippingFeeError && (
+                                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
+                                            <span className="text-orange-600 text-sm">
+                                                ⚠️ {shippingFeeError}
+                                            </span>
+                                        </div>
+                                    )}
+
                                     {/* Warning if address incomplete */}
-                                    {!isAddressComplete && (
+                                    {!isAddressComplete && !isLoadingShippingFee && (
                                         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
                                             <span className="text-yellow-600 text-sm">
                                                 ⚠️ Vui lòng nhập đầy đủ địa chỉ để tính phí giao hàng
@@ -308,10 +386,10 @@ function Cart() {
                                     )}
 
                                     {/* Success message when address is complete */}
-                                    {isAddressComplete && (
+                                    {isAddressComplete && !isLoadingShippingFee && (
                                         <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-start gap-2">
                                             <span className="text-green-600 text-sm">
-                                                ✓ Địa chỉ đã được xác nhận. Phí giao hàng đã được thêm vào đơn hàng.
+                                                ✓ Địa chỉ đã được xác nhận. Phí giao hàng: {formatNumber(deliveryFee)} đ
                                             </span>
                                         </div>
                                     )}
@@ -331,17 +409,20 @@ function Cart() {
                                     <span className="font-semibold">{formatNumber(subtotal)} đ</span>
                                 </div>
 
-                                {subtotal > 0 && discount > 0 && (
+                                {subtotal > 0 && discountAmount > 0 && (
                                     <div className="flex justify-between text-red-500 mt-2">
                                         <span>Discount (-{appliedDiscount?.value}%)</span>
-                                        <span className="font-semibold">- {discount.toLocaleString()} đ</span>
+                                        <span className="font-semibold">- {discountAmount.toLocaleString()} đ</span>
                                     </div>
                                 )}
 
-                                {/* Delivery Fee - Only show when address is complete */}
+                                {/* Delivery Fee - Show when address is complete */}
                                 {isAddressComplete && (
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Delivery Fee</span>
+                                        <span className="text-gray-600">
+                                            Delivery Fee
+                                            {isLoadingShippingFee && " (đang tải...)"}
+                                        </span>
                                         <span className="font-semibold">{formatNumber(deliveryFee)} đ</span>
                                     </div>
                                 )}
@@ -372,7 +453,7 @@ function Cart() {
                             </div>
 
                             <button
-                                disabled={!isAddressComplete || cartItems.length === 0}
+                                disabled={!isAddressComplete || cartItems.length === 0 || isLoadingShippingFee}
                                 onClick={handleGoToCheckout}
                                 className="w-full bg-black text-white py-4 rounded-full font-medium flex items-center justify-center gap-2 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                             >

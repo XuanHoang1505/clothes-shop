@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Notifications\Notifiable;
 use MongoDB\Laravel\Eloquent\Model;
 
 class Order extends Model
 {
+    use Notifiable;
     protected $connection = 'mongodb';
     protected $collection = 'orders';
 
@@ -38,4 +40,10 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    public function routeNotificationForMail()
+    {
+        return $this->customer_info['email'] ?? null;
+    }
+
 }

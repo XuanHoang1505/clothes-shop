@@ -28,6 +28,9 @@ import ChangePasswordPage from "@pages/site/account/changePassword/ChangePasswor
 import Profile from "./pages/site/profile/Profile";
 
 import "./css/style.css";
+import OrderManagement from "./pages/site/OrderManage/OrderManage";
+import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
+import CODReturn from "./pages/site/cod/CODReturn";
 
 function App() {
   const { user } = useContext(UserContext);
@@ -53,6 +56,7 @@ function App() {
               }
             >
               <Route path="users" element={<UserManagement />} />
+              <Route path="shipping-fees" element={<ShippingFeeManagement />} />
             </Route>
 
             {/* SITE */}
@@ -63,13 +67,14 @@ function App() {
               <Route
                 path="account"
                 element={
-                  <PrivateRoute roles={"USER"}>
+                  <PrivateRoute roles={["USER", "ADMIN"]}>
                     <AccountLayout />
                   </PrivateRoute>
                 }
               >
                 <Route path="profile" element={<Profile />} />
                 <Route path="update-info" element={<AccountInfo />} />
+                <Route path="my-order" element={<OrderManagement />} />
                 <Route
                   path="change-password"
                   element={<ChangePasswordPage user={user} />}
@@ -84,6 +89,7 @@ function App() {
 
             {/* OTHER PAGES */}
             <Route path="/vnpay-return" element={<VNPayReturn />} />
+            <Route path="/cod-return" element={<CODReturn />} />
             <Route path="/page403" element={<Page403 />} />
             <Route path="/page500" element={<Page500 />} />
             <Route path="*" element={<Page404 />} />
