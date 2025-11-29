@@ -74,6 +74,19 @@ export const refreshToken = async () => {
   }
 };
 
+
+export const forgotPassword = async (email) => {
+  try {
+    const response = await axiosInstance.post(`${AUTH_URL}/forgot-password`, {
+      email,
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    throw error;
+  } 
+};
+
 // Gửi OTP
 export const sendOtp = async (identifier, type) => {
   try {
@@ -101,6 +114,19 @@ export const resendOtp = async (identifier) => {
   }
 };
 
+export const verifyEmailOtp = async (identifier, otp) => {
+  try {
+    const response = await axiosInstance.post(`${AUTH_URL}/verify-email-otp`, {
+      email: identifier,
+      otp,
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    throw error;
+  }
+};
+
 // Xác thực OTP
 export const verifyOtp = async (identifier, otp) => {
   try {
@@ -120,7 +146,7 @@ export const resetPassword = async (email, newPassword) => {
   try {
     const response = await axiosInstance.post(`${AUTH_URL}/reset-password`, {
       email,
-      newPassword,
+      new_password: newPassword,
     });
     return response.data;
   } catch (error) {

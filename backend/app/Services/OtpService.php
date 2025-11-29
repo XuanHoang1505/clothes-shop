@@ -142,7 +142,7 @@ class OtpService
     {
         return 'otp:' . md5(strtolower($email));
     }
-
+    
     /**
      * Key cho resend rate limit
      */

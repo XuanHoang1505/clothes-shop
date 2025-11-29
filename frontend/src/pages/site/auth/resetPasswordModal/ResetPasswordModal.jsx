@@ -44,8 +44,8 @@ function ResetPasswordModal({
     if (validatePassword()) {
       try {
         setIsLoading(true);
-        const message = await resetPassword(email, password);
-        toast.success(message);
+        const response = await resetPassword(email, password);
+        toast.success(response.message);
         handleShowLoginModal();
       } catch (error) {
         toast.error("Đã xảy ra lỗi, vui lòng thử lại.");
@@ -196,11 +196,11 @@ function ResetPasswordModal({
       </Modal>
 
       {/* Global Loading Overlay */}
-      {isLoading && (
+      {/* {isLoading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 z-[9999]">
           <Spin size="large" />
         </div>
-      )}
+      )} */}
     </>
   );
 }
