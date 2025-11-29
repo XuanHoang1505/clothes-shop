@@ -22,8 +22,8 @@ const TableBody = ({
   expandedRows,
   handleRenderBtn,
   onEdit,
-  onEditArticle,
-  onViewDetailArticle,
+  onEditProduct,
+  onViewDetailProduct,
   handleShowModal,
   handleShowConfirmModal,
   handleShowApproveModal,
@@ -131,7 +131,7 @@ const TableBody = ({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   onEdit(item);
-                                  onEditArticle(item.slug);
+                                  onEditProduct(item.slug);
                                   handleShowModal();
                                 }}
                                 className="btn__edit"
@@ -157,7 +157,7 @@ const TableBody = ({
                                 icon={<FileTextOutlined />}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onViewDetailArticle(item.slug);
+                                  onViewDetailProduct(item.slug);
                                   onViewDetail(item);
                                 }}
                                 className="btn__detail"

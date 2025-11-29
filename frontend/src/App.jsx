@@ -6,12 +6,14 @@ import { Spin } from "antd";
 import { UserContext } from "./contexts/UserContext";
 
 import ProductDetailsPage from "@pages/site/ProductDetailsPage";
-import CategoryPage from "@pages/site/category/CategoryPage";
+import ShopPage from "@pages/site/shop/ShopPage";
 import Cart from "@pages/site/cart/Cart";
 import Checkout from "@/pages/site/Checkout/Checkout";
 import Home from "@pages/site/home/Home";
 
-import UserManagement from "./pages/admin/userManagement/UserManagement";
+import UserManagement from "@pages/admin/userManagement/UserManagement";
+import ProductManagement from "./pages/admin/productManagement/ProductManagement";
+
 import VNPayReturn from "./pages/site/vnpay/VNPayReturn";
 
 import Page403 from "@/pages/site/page403/Page403";
@@ -28,10 +30,16 @@ import ChangePasswordPage from "@pages/site/account/changePassword/ChangePasswor
 import Profile from "./pages/site/profile/Profile";
 
 import "./css/style.css";
+import ProductAdminPanel from "./pages/admin/productManagement/ProductAdminPanel";
+import ProductCreateForm from "./pages/admin/productManagement/ProductCreateForm";
+
 import OrderManagement from "./pages/site/OrderManage/OrderManage";
 import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
 import CODReturn from "./pages/site/cod/CODReturn";
+
 import WriteCommentOrder from "./components/site/writeComment_true/WriteCommentOrder";
+import CategoryPage from "./pages/site/category/CategoryPage"; // <-- Bạn cần import trang này nếu có
+
 
 function App() {
   const { user } = useContext(UserContext);
@@ -47,6 +55,7 @@ function App() {
           }
         >
           <Routes>
+
             {/* ADMIN */}
             <Route
               path="/admin/"
@@ -57,11 +66,16 @@ function App() {
               }
             >
               <Route path="users" element={<UserManagement />} />
+              <Route path="products" element={<ProductManagement />} />
+              <Route path="product/:slug" element={<ProductAdminPanel />} />
+              <Route path="product/create" element={<ProductCreateForm />} />
               <Route path="shipping-fees" element={<ShippingFeeManagement />} />
             </Route>
 
+
             {/* SITE */}
             <Route path="/" element={<SiteLayout />}>
+
               <Route index element={<Home />} />
 
               {/* ACCOUNT */}
@@ -82,12 +96,16 @@ function App() {
                 />
               </Route>
 
+              {/* MERGE CẢ 2 NHÁNH */}
               <Route path="category" element={<CategoryPage />} />
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
               <Route path="product/:slug" element={<ProductDetailsPage />} />
               <Route path="write-comment-order/:slug" element={<WriteCommentOrder />} />
+
+              <Route path="shop" element={<ShopPage />} />
             </Route>
+
 
             {/* OTHER PAGES */}
             <Route path="/vnpay-return" element={<VNPayReturn />} />

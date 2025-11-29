@@ -10,88 +10,68 @@ class UpdateProductRequest extends BaseRequest
 {
     public function rules(): array
     {
-        $productId = $this->route('product')?->_id;
+        // Lấy ID từ route parameter
+        $productId = $this->route('id');
 
         return [
-            // Basic info
-            'name' => 'sometimes|required|string|max:255',
+            // ===== THÔNG TIN CƠ BẢN =====
+            'name' => 'sometimes|string|max:255',
             'slug' => [
                 'sometimes',
-                'nullable',
                 'string',
                 'max:255',
                 Rule::unique('products', 'slug')->ignore($productId, '_id')
             ],
             'description' => 'sometimes|nullable|string',
-            'sku' => [
-                'sometimes',
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('products', 'sku')->ignore($productId, '_id')
-            ],
-            'barcode' => 'sometimes|nullable|string|max:100',
             
-            // Category (Embedded object)
-            'category' => 'sometimes|required|array',
-            'category.name' => 'required_with:category|string|max:255',
-            'category.slug' => 'required_with:category|string|max:255',
-            'category.parent' => 'nullable|string|max:255',
+            // ===== CATEGORY (Embedded Object) =====
+            'category' => 'sometimes|nullable|array',
+            'category.name' => 'sometimes|string|max:255',
+            'category.slug' => 'sometimes|string|max:255',
             
-            // Brand (Embedded object)
-            'brand' => 'sometimes|required|array',
-            'brand.name' => 'required_with:brand|string|max:255',
-            'brand.slug' => 'required_with:brand|string|max:255',
-            'brand.country' => 'nullable|string|max:100',
-            'brand.logo' => 'nullable|url',
+            // ===== BRAND (Embedded Object) =====
+            'brand' => 'sometimes|nullable|array',
+            'brand.name' => 'sometimes|string|max:255',
+            'brand.slug' => 'sometimes|string|max:255',
             
-            // Pricing
-            'price' => 'sometimes|required|numeric|min:0',
+            // ===== GIÁ =====
+            'price' => 'sometimes|numeric|min:0',
             'compare_price' => 'sometimes|nullable|numeric|min:0',
-            'cost_price' => 'sometimes|nullable|numeric|min:0',
             
-            // Inventory
-            'stock' => 'sometimes|nullable|integer|min:0',
-            
-            // Images (Array of objects)
+            // ===== HÌNH ẢNH (Array of strings) =====
             'images' => 'sometimes|nullable|array',
-            'images.*.url' => 'required|url',
-            'images.*.alt' => 'nullable|string|max:255',
-            'images.*.is_primary' => 'nullable|boolean',
-            'images.*.order' => 'nullable|integer|min:1',
+            'images.*' => 'url',
             
-            // Variants (Array of objects)
+            // ===== BIẾN THỂ (Array of objects) =====
             'variants' => 'sometimes|nullable|array',
-            'variants.*.sku' => 'required|string|max:100|distinct',
             'variants.*.size' => 'required|string|max:50',
             'variants.*.color' => 'required|string|max:50',
-            'variants.*.color_code' => 'nullable|string|max:20',
             'variants.*.stock' => 'required|integer|min:0',
             'variants.*.price' => 'required|numeric|min:0',
-            'variants.*.weight' => 'nullable|integer|min:0',
             
-            // Product details
+            // ===== CHI TIẾT SẢN PHẨM =====
             'tags' => 'sometimes|nullable|array',
             'tags.*' => 'string|max:50',
             'material' => 'sometimes|nullable|string|max:255',
             'care_instructions' => 'sometimes|nullable|string',
             
-            // Dimensions
-            'weight' => 'sometimes|nullable|integer|min:0',
+            // ===== KÍCH THƯỚC (Dimensions - cho phép string) =====
+            // Dựa theo data: waist, length, legOpening, chest, shoulder
             'dimensions' => 'sometimes|nullable|array',
-            'dimensions.length' => 'nullable|numeric|min:0',
-            'dimensions.width' => 'nullable|numeric|min:0',
-            'dimensions.height' => 'nullable|numeric|min:0',
+            'dimensions.length' => 'sometimes|nullable|string|max:50',
+            'dimensions.chest' => 'sometimes|nullable|string|max:50',
+            'dimensions.shoulder' => 'sometimes|nullable|string|max:50',
+            'dimensions.waist' => 'sometimes|nullable|string|max:50',
+            'dimensions.legOpening' => 'sometimes|nullable|string|max:50',
             
-            // SEO
-            'meta_title' => 'sometimes|nullable|string|max:255',
-            'meta_description' => 'sometimes|nullable|string|max:500',
-            'meta_keywords' => 'sometimes|nullable|array',
-            'meta_keywords.*' => 'string|max:100',
+            // ===== DRESS STYLE (Embedded Object) =====
+            'dressStyle' => 'sometimes|nullable|array',
+            'dressStyle.name' => 'sometimes|string|max:255',
+            'dressStyle.slug' => 'sometimes|string|max:255',
             
-            // Status
-            'is_featured' => 'sometimes|nullable|boolean',
-            'is_active' => 'sometimes|nullable|boolean',
+            // ===== TRẠNG THÁI =====
+            'is_featured' => 'sometimes|boolean',
+            'is_active' => 'sometimes|boolean',
             'is_new' => 'sometimes|nullable|boolean',
             'is_bestseller' => 'sometimes|nullable|boolean',
         ];
@@ -100,24 +80,79 @@ class UpdateProductRequest extends BaseRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Tên sản phẩm là bắt buộc',
-            'sku.required' => 'Mã SKU là bắt buộc',
-            'sku.unique' => 'Mã SKU đã tồn tại',
-            'price.required' => 'Giá sản phẩm là bắt buộc',
+            // Basic
+            'name.string' => 'Tên sản phẩm phải là chuỗi ký tự',
+            'name.max' => 'Tên sản phẩm không được vượt quá 255 ký tự',
+            'slug.unique' => 'Slug đã tồn tại, vui lòng chọn slug khác',
+            
+            // Price
+            'price.numeric' => 'Giá phải là số',
             'price.min' => 'Giá phải lớn hơn hoặc bằng 0',
-            'category.name.required_with' => 'Tên danh mục là bắt buộc',
-            'brand.name.required_with' => 'Tên thương hiệu là bắt buộc',
-            'variants.*.sku.distinct' => 'Mã SKU của biến thể phải là duy nhất',
+            'compare_price.numeric' => 'Giá so sánh phải là số',
+            'compare_price.min' => 'Giá so sánh phải lớn hơn hoặc bằng 0',
+            
+            // Images
+            'images.array' => 'Hình ảnh phải là một mảng',
+            'images.*.url' => 'URL hình ảnh không hợp lệ',
+            
+            // Variants
+            'variants.array' => 'Biến thể phải là một mảng',
+            'variants.*.size.required' => 'Kích thước biến thể là bắt buộc',
+            'variants.*.color.required' => 'Màu sắc biến thể là bắt buộc',
+            'variants.*.stock.required' => 'Số lượng tồn kho là bắt buộc',
+            'variants.*.stock.integer' => 'Số lượng tồn kho phải là số nguyên',
+            'variants.*.stock.min' => 'Số lượng tồn kho phải lớn hơn hoặc bằng 0',
+            'variants.*.price.required' => 'Giá biến thể là bắt buộc',
+            'variants.*.price.numeric' => 'Giá biến thể phải là số',
+            'variants.*.price.min' => 'Giá biến thể phải lớn hơn hoặc bằng 0',
+            
+            // Tags
+            'tags.array' => 'Tags phải là một mảng',
+            'tags.*.string' => 'Mỗi tag phải là chuỗi ký tự',
+            'tags.*.max' => 'Mỗi tag không được vượt quá 50 ký tự',
+            
+            // Category
+            'category.name.string' => 'Tên danh mục phải là chuỗi ký tự',
+            'category.slug.string' => 'Slug danh mục phải là chuỗi ký tự',
+            
+            // Brand
+            'brand.name.string' => 'Tên thương hiệu phải là chuỗi ký tự',
+            'brand.slug.string' => 'Slug thương hiệu phải là chuỗi ký tự',
+            
+            // DressStyle
+            'dressStyle.name.string' => 'Tên phong cách phải là chuỗi ký tự',
+            'dressStyle.slug.string' => 'Slug phong cách phải là chuỗi ký tự',
         ];
     }
 
     protected function prepareForValidation()
     {
-        // Auto generate slug from name if name is updated but slug is not provided
-        if ($this->name && !$this->slug) {
+        // Auto-generate slug từ name nếu name được update nhưng không có slug
+        if ($this->has('name') && !$this->has('slug')) {
             $this->merge([
                 'slug' => Str::slug($this->name)
             ]);
         }
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'name' => 'tên sản phẩm',
+            'slug' => 'đường dẫn',
+            'description' => 'mô tả',
+            'price' => 'giá bán',
+            'compare_price' => 'giá so sánh',
+            'material' => 'chất liệu',
+            'care_instructions' => 'hướng dẫn bảo quản',
+            'category.name' => 'tên danh mục',
+            'brand.name' => 'tên thương hiệu',
+            'dressStyle.name' => 'tên phong cách',
+            'is_featured' => 'sản phẩm nổi bật',
+            'is_active' => 'trạng thái kích hoạt',
+        ];
     }
 }
