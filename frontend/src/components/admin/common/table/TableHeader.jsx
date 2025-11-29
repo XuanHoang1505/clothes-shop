@@ -14,6 +14,7 @@ const TableHeader = ({
   setSearchTerm,
   handleRenderBtn,
   handleShowModal,
+  onCreateProduct,
   columns,
   handleColumnToggle,
   visibleColumns,
@@ -59,6 +60,7 @@ const TableHeader = ({
             onClick={() => {
               handleReset();
               handleShowModal();
+              onCreateProduct();
             }}
           >
             Thêm

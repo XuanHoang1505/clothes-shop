@@ -3,15 +3,18 @@ namespace App\Services\Implementations;
 
 use App\Services\Interfaces\ProductServiceInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
+use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Log;
 
 class ProductService implements ProductServiceInterface
 {
     protected $productRepository;
+    protected $cloudinaryService;
 
-    public function __construct(ProductRepositoryInterface $productRepository)
+    public function __construct(ProductRepositoryInterface $productRepository, CloudinaryService $cloudinaryService)
     {
         $this->productRepository = $productRepository;
+        $this->cloudinaryService = $cloudinaryService;
     }
 
     public function getAllProducts(int $page = 1, int $pageSize = 15): array
@@ -299,7 +302,15 @@ class ProductService implements ProductServiceInterface
 
     public function createProduct(array $data): array
     {
+        $uploadedImageUrls = [];
+        
         try {
+            // Upload images nếu có
+            if (isset($data['images']) && is_array($data['images'])) {
+                $uploadedImageUrls = $this->uploadImages($data['images']);
+                $data['images'] = $uploadedImageUrls;
+            }
+
             $product = $this->productRepository->create($data);
 
             return [
@@ -308,6 +319,11 @@ class ProductService implements ProductServiceInterface
                 'data' => $product
             ];
         } catch (\Exception $e) {
+            // Rollback: xóa các ảnh đã upload nếu tạo product thất bại
+            if (!empty($uploadedImageUrls)) {
+                $this->cleanupImages($uploadedImageUrls);
+            }
+
             Log::error('Error creating product', [
                 'data' => $data,
                 'error' => $e->getMessage()
@@ -315,21 +331,40 @@ class ProductService implements ProductServiceInterface
 
             return [
                 'success' => false,
-                'message' => 'Không thể tạo sản phẩm'
+                'message' => 'Không thể tạo sản phẩm: ' . $e->getMessage()
             ];
         }
     }
 
     public function updateProduct(string $id, array $data): array
     {
+        $uploadedImageUrls = [];
+        $oldImageUrls = [];
+        
         try {
-            $updated = $this->productRepository->update($id, $data);
-
-            if (!$updated) {
+            $product = $this->productRepository->findById($id);
+            
+            if (!$product) {
                 return [
                     'success' => false,
                     'message' => 'Không tìm thấy sản phẩm'
                 ];
+            }
+
+            // Lưu lại ảnh cũ để xóa sau
+            $oldImageUrls = $product->images ?? [];
+
+            // Upload ảnh mới nếu có
+            if (isset($data['images']) && is_array($data['images'])) {
+                $uploadedImageUrls = $this->uploadImages($data['images']);
+                $data['images'] = $uploadedImageUrls;
+            }
+
+            $updated = $this->productRepository->update($id, $data);
+
+            // Xóa ảnh cũ trên Cloudinary sau khi update thành công
+            if (!empty($oldImageUrls) && isset($data['images'])) {
+                $this->cleanupImages($oldImageUrls);
             }
 
             return [
@@ -337,6 +372,11 @@ class ProductService implements ProductServiceInterface
                 'message' => 'Cập nhật sản phẩm thành công'
             ];
         } catch (\Exception $e) {
+            // Rollback: xóa ảnh mới đã upload nếu update thất bại
+            if (!empty($uploadedImageUrls)) {
+                $this->cleanupImages($uploadedImageUrls);
+            }
+
             Log::error('Error updating product', [
                 'id' => $id,
                 'data' => $data,
@@ -345,8 +385,53 @@ class ProductService implements ProductServiceInterface
 
             return [
                 'success' => false,
-                'message' => 'Không thể cập nhật sản phẩm'
+                'message' => 'Không thể cập nhật sản phẩm: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Upload nhiều ảnh
+     */
+   private function uploadImages(array $images): array
+    {
+        $uploadedUrls = [];
+        
+        foreach ($images as $imageData) {
+            // Nếu là URL (ảnh cũ), giữ nguyên
+            if (is_string($imageData) && filter_var($imageData, FILTER_VALIDATE_URL)) {
+                $uploadedUrls[] = $imageData;
+                continue;
+            }
+
+            // Upload ảnh mới (base64 hoặc file)
+            $uploadedUrl = $this->cloudinaryService->uploadImage($imageData, 'products');
+            
+            if ($uploadedUrl) {
+                $uploadedUrls[] = $uploadedUrl;
+            }
+        }
+        
+        return $uploadedUrls;
+    }
+
+    /**
+     * Xóa nhiều ảnh trên Cloudinary
+     */
+    private function cleanupImages(array $imageUrls): void
+    {
+        foreach ($imageUrls as $url) {
+            try {
+                $publicId = $this->cloudinaryService->extractPublicId($url);
+                if ($publicId) {
+                    $this->cloudinaryService->deleteImage($publicId);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Failed to delete image from Cloudinary', [
+                    'url' => $url,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 

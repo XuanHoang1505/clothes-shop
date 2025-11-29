@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
 use MongoDB\Laravel\Eloquent\Model;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Model implements JWTSubject
+class User extends Model implements AuthenticatableContract, AuthorizableContract, JWTSubject
 {
-    use Notifiable;
+    use Authenticatable, Authorizable, Notifiable;
+
     protected $connection = 'mongodb';
     protected $collection = 'users';
 
@@ -28,21 +33,47 @@ class User extends Model implements JWTSubject
         'password',
     ];
 
+    /**
+     * Check if user is admin
+     */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'ADMIN';
     }
 
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     */
     public function getJWTIdentifier()
     {
-        // Trả về khóa định danh của user (thường là _id với MongoDB)
         return $this->getKey();
     }
 
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     */
     public function getJWTCustomClaims()
     {
-        // Trả về thêm các thông tin custom muốn đưa vào token (nếu có)
-        return [];
+        return [
+            'role' => $this->role,
+            'email' => $this->email,
+        ];
     }
 
+    /**
+     * Get the name of the unique identifier for the user.
+     * MongoDB uses _id instead of id
+     */
+    public function getAuthIdentifierName()
+    {
+        return '_id';
+    }
+
+    /**
+     * Get the password for the user.
+     */
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
 }

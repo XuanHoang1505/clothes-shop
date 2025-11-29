@@ -3,7 +3,7 @@ import { Slider, Drawer, Spin, Rate, Pagination, message } from "antd";
 import { SlidersHorizontal, ChevronRight, ShoppingCart } from "lucide-react";
 import ProductService from "@/services/site/ProductService";
 
-function CategoryPage() {
+function ShopPage() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -111,7 +111,7 @@ function CategoryPage() {
   const fetchCategories = async () => {
     try {
       const result = await ProductService.getCategories();
-      setCategories(result.data || []);
+      setCategories(result || []);
     } catch (error) {
       console.error("Lỗi khi lấy danh mục:", error);
     }
@@ -561,4 +561,4 @@ function CategoryPage() {
   );
 }
 
-export default CategoryPage;
+export default ShopPage;
