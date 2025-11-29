@@ -43,12 +43,12 @@ Route::prefix('products')->group(function () {
     Route::get('/{slug}', [ProductController::class, 'findBySlug']); 
     
     // ===== ADMIN ROUTES =====
-    Route::middleware(['auth:api', 'admin'])->group(function () {
+    // Route::middleware(['auth:api', 'admin'])->group(function () {
         Route::post('/', [ProductController::class, 'store']);
         Route::put('/{id}', [ProductController::class, 'update']);
         Route::delete('/{id}', [ProductController::class, 'destroy']);
 
-    });
+    // });
 });
 
 

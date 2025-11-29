@@ -6,12 +6,13 @@ import { Spin } from "antd";
 import { UserContext } from "./contexts/UserContext";
 
 import ProductDetailsPage from "@pages/site/ProductDetailsPage";
-import CategoryPage from "@pages/site/category/CategoryPage";
+import ShopPage from "@pages/site/shop/ShopPage";
 import Cart from "@pages/site/cart/Cart";
 import Checkout from "@/pages/site/Checkout/Checkout";
 import Home from "@pages/site/home/Home";
 
 import UserManagement from "@pages/admin/userManagement/UserManagement";
+import ProductManagement from "./pages/admin/productManagement/ProductManagement";
 
 import Page403 from "@/pages/site/page403/Page403";
 import Page500 from "@pages/page500/Page500";
@@ -27,6 +28,8 @@ import ChangePasswordPage from "@pages/site/account/changePassword/ChangePasswor
 import Profile from "./pages/site/profile/Profile";
 
 import "./css/style.css";
+import ProductAdminPanel from "./pages/admin/productManagement/ProductAdminPanel";
+import ProductCreateForm from "./pages/admin/productManagement/ProductCreateForm";
 
 function App() {
 
@@ -51,6 +54,9 @@ function App() {
               }
             >
               <Route path="users" element={<UserManagement />} />
+              <Route path="products" element={<ProductManagement />} />
+              <Route path="product/:slug" element={<ProductAdminPanel />} />
+              <Route path="product/create" element={<ProductCreateForm />} />
             </Route>
             <Route path="/" element={<SiteLayout />}>
               <Route index element={<Home />} />
@@ -66,7 +72,7 @@ function App() {
                 <Route  path="update-info" element={<AccountInfo />} />
                 <Route path="change-password" element={<ChangePasswordPage user={user}/>} />
               </Route>
-              <Route path="/category" element={<CategoryPage />} />
+              <Route path="/shop" element={<ShopPage />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/product/:slug" element={<ProductDetailsPage />} />

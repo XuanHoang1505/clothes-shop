@@ -24,10 +24,11 @@ const TableManagement = ({
   defaultColumns,
   modalContent,
   statusFunction,
-  handleReset,
+  handleReset = () => {},
   onEdit = () => {},
   onViewDetail = () => {},
-  onViewDetailArticle = () => {},
+  onViewDetailProduct = () => {},
+  onCreateProduct = () => {},
   handleSaveItem,
   onDelete,
   onSetting,
@@ -36,7 +37,7 @@ const TableManagement = ({
   onResetStatus,
   onReject,
   onApprove,
-  onEditArticle = () => {},
+  onEditProduct = () => {},
 }) => {
   const [visibleColumns, setVisibleColumns] = useState(
     defaultColumns.map((col) => col.key)
@@ -340,6 +341,7 @@ const TableManagement = ({
         setSearchTerm={setSearchTerm}
         handleRenderBtn={handleRenderBtn}
         handleShowModal={handleShowModal}
+        onCreateProduct={onCreateProduct}
         columns={columns}
         handleColumnToggle={handleColumnToggle}
         visibleColumns={visibleColumns}
@@ -356,8 +358,8 @@ const TableManagement = ({
         sortConfig={sortConfig}
         handleRenderBtn={handleRenderBtn}
         onEdit={onEdit}
-        onEditArticle={onEditArticle}
-        onViewDetailArticle={onViewDetailArticle}
+        onEditProduct={onEditProduct}
+        onViewDetailProduct={onViewDetailProduct}
         handleShowModal={handleShowModal}
         handleShowConfirmModal={handleShowConfirmModal}
         handleShowApproveModal={handleShowApproveModal}
