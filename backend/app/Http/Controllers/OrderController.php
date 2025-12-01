@@ -303,4 +303,12 @@ class OrderController extends Controller
             ], 500);
         }
     }
+    public function getOrderByEmail(Request $request)
+    {
+        $email = $request->query('email'); // hoặc $request->email nếu gửi body
+
+        $result = $this->orderService->getOrderByEmail($email);
+
+        return response()->json($result);
+    }
 }

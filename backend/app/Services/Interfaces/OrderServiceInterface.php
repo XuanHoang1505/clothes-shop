@@ -20,4 +20,5 @@ interface OrderServiceInterface
     public function calculateOrderTotal(array $items, array $options = []);
     public function cancelOrder(string $id, string $reason = null);
     public function completeOrder(string $id);
+    public function getOrderByEmail(string $email);
 }

@@ -93,6 +93,12 @@ class ProductController extends Controller
         $product = $this->productService->getProductBySlug($slug);
         return new ProductResource($product);
     }
+
+        public function findById ($id)
+    {
+        $product = $this->productService->getProductById($id);
+        return new ProductResource($product);
+    }
     public function store(CreateProductRequest $request)
     {
         $result = $this->productService->createProduct($request->validated());

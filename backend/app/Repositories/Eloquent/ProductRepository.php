@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 
@@ -19,7 +20,17 @@ class ProductRepository implements ProductRepositoryInterface
 
     public function findBySlug(string $slug)
     {
-        return Product::where('slug', $slug)->first();
+        $product = Product::where('slug', $slug)->first();
+
+        if (!$product) {
+            return response()->json([
+                'message' => 'Sản phẩm không tồn tại'
+            ], 404);
+        }
+
+        // Trả về Resource chỉ khi $product tồn tại
+        return new ProductResource($product);
+
     }
 
     public function findByCategorySlug(string $categorySlug, int $page = 1, int $perPage = 15)

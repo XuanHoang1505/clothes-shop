@@ -2,6 +2,7 @@
 
 namespace App\Services\Implementations;
 
+use App\Repositories\Eloquent\UserRepository;
 use App\Repositories\Interfaces\OrderRepositoryInterface;
 use App\Services\Interfaces\OrderServiceInterface;
 use Illuminate\Support\Facades\DB;
@@ -10,10 +11,12 @@ use Illuminate\Support\Str;
 class OrderService implements OrderServiceInterface
 {
     protected $orderRepository;
+    protected $userRepository;
 
-    public function __construct(OrderRepositoryInterface $orderRepository)
+    public function __construct(OrderRepositoryInterface $orderRepository, UserRepository $userRepository)
     {
         $this->orderRepository = $orderRepository;
+        $this->userRepository = $userRepository;
     }
 
     public function getAllOrders()
@@ -276,5 +279,28 @@ class OrderService implements OrderServiceInterface
         }
 
         return $this->orderRepository->updateStatus($id, 'delivered');
+    }
+
+    public function getOrderByEmail(string $email)
+    {
+        // Kiểm tra user có tồn tại không
+        $user = $this->userRepository->findByEmail($email);
+
+        if (!$user) {
+            return [
+                'success' => false,
+                'message' => 'Email này không tồn tại trong hệ thống.',
+                'orders'  => []
+            ];
+        }
+
+        // Lấy danh sách đơn hàng theo email
+        $orders = $this->orderRepository->getOrderByEmail($email);
+
+        return [
+            'success' => true,
+            'message' => 'Lấy đơn hàng thành công.',
+            'orders'  => $orders
+        ];
     }
 }

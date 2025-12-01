@@ -289,16 +289,16 @@ class ProductService implements ProductServiceInterface
             ];
         }
     }
-    public function getProductById(string $id)
-    {
-        return $this->productRepository->findById($id);
-    }
 
     public function getProductBySlug(string $slug)
     {
         return $this->productRepository->findBySlug($slug);
     }
 
+    public function getProductById (string $id)
+    {
+        return $this->productRepository->findById($id);
+    }
 
     public function createProduct(array $data): array
     {
@@ -511,4 +511,3 @@ class ProductService implements ProductServiceInterface
         }
     }
 }
-

@@ -5,7 +5,7 @@ import handleErrorResponse from "../../utils/errors/ErrorHandler";
 const API_URL = "/products";
 
 // 🧩 Lấy tất cả sản phẩm
-const getProducts = async (current = 1,  pageSize = 9 ) => {
+const getProducts = async (current = 1, pageSize = 9) => {
   try {
     const response = await axiosInstance.get(API_URL, {
       params: {
@@ -24,18 +24,20 @@ const getProducts = async (current = 1,  pageSize = 9 ) => {
 // 🔍 Lấy sản phẩm theo ID
 const getProductById = async (id) => {
   try {
-    const response = await axiosInstance.get(`${API_URL}/${id}`);
-    return response.data;
-  } catch (error) {
-    handleErrorResponse(error);
-    console.error(`Lỗi khi lấy product ID: ${id}`, error);
-    throw error;
+    // dùng query param id
+    const res = await axiosInstance.get(`${API_URL}/${id}`);
+    return res.data;
+  } catch (err) {
+    console.error('Lỗi khi lấy product ID:', id, err);
+    throw err;
   }
 };
+
+
 // Lấy sản phẩm theo slug
 const getProductBySlug = async (slug) => {
   try {
-    const response = await axiosInstance.get(`${API_URL}/${slug}`);
+    const response = await axiosInstance.get(`${API_URL}/slug/${slug}`);
     return response.data;
   } catch (error) {
     handleErrorResponse(error);
@@ -60,9 +62,9 @@ const getProductsByCategory = async (categorySlug, page = 1, pageSize = 9) => {
 };
 
 //Filter products
-const filtersProduct = async (current = 1,  pageSize = 9, filters= {} ) => {
+const filtersProduct = async (current = 1, pageSize = 9, filters = {}) => {
   console.log(filters);
-  
+
   try {
     const response = await axiosInstance.get(`${API_URL}/filters`, {
       params: {
@@ -108,13 +110,13 @@ const createProduct = async (productData) => {
   try {
     const formData = new FormData();
     appendFormData(formData, productData);
-    
+
     const response = await axiosInstance.post(API_URL, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    
+
     return response.data;
   } catch (error) {
     handleErrorResponse(error);
@@ -178,7 +180,7 @@ const getDressStyles = async () => {
   } catch (error) {
     handleErrorResponse(error);
     throw error;
-  } 
+  }
 };
 
 const ProductService = {
