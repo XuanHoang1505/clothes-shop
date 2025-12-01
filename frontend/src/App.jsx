@@ -37,7 +37,7 @@ import ProductCreateForm from "./pages/admin/productManagement/ProductCreateForm
 import OrderManagement from "./pages/site/OrderManage/OrderManage";
 import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
 import CODReturn from "./pages/site/cod/CODReturn";
-
+import AdminOrderManagement from "./pages/admin/orderManagement/AdminOrderManagement";
 import WriteCommentOrder from "./components/site/writeComment_true/WriteCommentOrder";
 
 
@@ -70,6 +70,7 @@ function App() {
               <Route path="product/:slug" element={<ProductAdminPanel />} />
               <Route path="product/create" element={<ProductCreateForm />} />
               <Route path="shipping-fees" element={<ShippingFeeManagement />} />
+              <Route path="orders" element={<AdminOrderManagement />} />
             </Route>
 
 

@@ -11,6 +11,7 @@ class CreateReviewRequest extends BaseRequest
     {
         return [
            'product_id' => 'required|string',
+            'order_id' => 'required|string',
             'user_id'    => 'required|string',
             'rating'     => 'required|integer|min:1|max:5',
             'content'    => 'required|string|min:20',
@@ -22,6 +23,7 @@ class CreateReviewRequest extends BaseRequest
     {
         return [
             'product_id.required' => 'Product is required.',
+            'order_id.required' => 'orderId is required',
             'user_id.required'    => 'User is required.',
             'rating.required'     => 'Rating is required.',
             'content.required'    => 'Review content is required.',

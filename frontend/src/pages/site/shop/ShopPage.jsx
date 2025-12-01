@@ -95,7 +95,7 @@ function ShopPage() {
         );
       }
 
-      setProducts(result.data || []);
+      setProducts(result || []);
       setPagination((prev) => ({
         ...prev,
         total: result.total || 0,
@@ -108,10 +108,12 @@ function ShopPage() {
     }
   };
 
+  console.log(products);
+  
   const fetchCategories = async () => {
     try {
       const result = await ProductService.getCategories();
-      setCategories(result || []);
+      setCategories(result.data || []);
     } catch (error) {
       console.error("Lỗi khi lấy danh mục:", error);
     }

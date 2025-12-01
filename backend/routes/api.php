@@ -57,7 +57,20 @@ Route::prefix('products')->group(function () {
 });
 
 Route::prefix('orders')->group(function () {
-    Route::get('/by-email', [OrderController::class, 'getOrderByEmail']);
+    Route::get('/', [OrderController::class, 'index']);
+    Route::get('/by-email', [OrderController::class, 'getOrderByEmail']); 
+    Route::post('/', [OrderController::class, 'store']);
+    Route::get('/statistics', [OrderController::class, 'statistics']);
+    Route::get('/search', [OrderController::class, 'search']);
+    Route::get('/code/{orderCode}', [OrderController::class, 'getByOrderCode']);
+    Route::get('/user/{userId}', [OrderController::class, 'getUserOrders']);
+    Route::get('/{id}', [OrderController::class, 'show']);
+    Route::put('/{id}', [OrderController::class, 'update']);
+    Route::delete('/{id}', [OrderController::class, 'destroy']);
+    Route::patch('/{id}/status', [OrderController::class, 'updateStatus']);
+    Route::patch('/{id}/payment-status', [OrderController::class, 'updatePaymentStatus']);
+    Route::post('/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::post('/{id}/complete', [OrderController::class, 'complete']);
 });
 
 

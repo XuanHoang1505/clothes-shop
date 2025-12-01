@@ -104,6 +104,8 @@ function OrderManagement() {
         return methods[method] || method;
     };
 
+    
+
 
     const toggleOrder = (orderId) => {
         setExpandedOrder(expandedOrder === orderId ? null : orderId);
@@ -177,10 +179,7 @@ function OrderManagement() {
         if (!selectedProduct || !selectedOrder) return;
 
         try {
-            // Gọi API lấy thông tin sản phẩm
             const productData = await ProductService.getProductById(selectedProduct.product_id);
-            console.log(productData);
-
 
             if (!productData.data.slug) {
                 alert('Không tìm thấy thông tin sản phẩm. Vui lòng thử lại.');
@@ -189,11 +188,7 @@ function OrderManagement() {
 
             navigate(`/write-comment-order/${productData.data.slug}`, {
                 state: {
-                    orderId: selectedOrder.id,
-                    orderCode: selectedOrder.orderCode,
-                    productId: selectedProduct.product_id,
-                    productName: selectedProduct.name,
-                    item: selectedProduct
+                    orderId: selectedOrder?.id,
                 }
             });
 

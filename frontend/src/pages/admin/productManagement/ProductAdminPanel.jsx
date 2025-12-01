@@ -20,6 +20,7 @@ import {
   Badge,
   Spin,
   Alert,
+  Image,
 } from "antd";
 import {
   SaveOutlined,
@@ -47,10 +48,21 @@ const ProductAdminPanel = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [product, setProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("basic");
-  const [imagePreviews, setImagePreviews] = useState([]);
+  
+  // Tách riêng ảnh cũ và ảnh mới
+  const [existingImages, setExistingImages] = useState([]); // Array of URLs
+  const [newImageFiles, setNewImageFiles] = useState([]); // Array of File objects
+  const [newImagePreviews, setNewImagePreviews] = useState([]); // Array of preview URLs
 
   useEffect(() => {
     fetchProductData();
+  }, [slug]);
+
+  // Cleanup preview URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+    };
   }, []);
 
   const fetchProductData = async () => {
@@ -58,6 +70,7 @@ const ProductAdminPanel = () => {
       setLoading(true);
       const response = await ProductService.getProductBySlug(slug);
       setProduct(response.data);
+      setExistingImages(response.data.images || []);
     } catch (error) {
       toast.error("Không thể tải dữ liệu sản phẩm");
     } finally {
@@ -132,49 +145,67 @@ const ProductAdminPanel = () => {
     });
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const validFiles = [];
-    const newPreviews = [];
+  // Xử lý upload ảnh mới
+  const handleImageUpload = ({ file }) => {
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      message.error(`${file.name} không phải là file ảnh`);
+      return;
+    }
 
-    files.forEach((file) => {
-      // Validate
-      if (!file.type.startsWith("image/")) {
-        message.error(`${file.name} không phải là file ảnh`);
-        return;
-      }
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      message.error(`${file.name} vượt quá 5MB`);
+      return;
+    }
 
-      if (file.size > 5 * 1024 * 1024) {
-        message.error(`${file.name} vượt quá 5MB`);
-        return;
-      }
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
 
-      const previewUrl = URL.createObjectURL(file);
+    // Add to state
+    setNewImageFiles((prev) => [...prev, file]);
+    setNewImagePreviews((prev) => [...prev, previewUrl]);
+    setIsDirty(true);
 
-      validFiles.push(file);
-      newPreviews.push(previewUrl);
-    });
-
-    setProduct((prev) => ({
-      ...prev,
-      images: [...prev.images, ...validFiles],
-    }));
-
-    setImagePreviews((prev) => [...prev, ...newPreviews]);
-
-    // Reset input
-    e.target.value = "";
+    message.success(`Đã thêm ${file.name}`);
   };
 
-  const removeImage = (index) => {
-    setProduct((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-    setIsDirty(true);
+  // Xóa ảnh cũ
+  const removeExistingImage = (index) => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc muốn xóa ảnh này?",
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okType: "danger",
+      onOk: () => {
+        setExistingImages((prev) => prev.filter((_, i) => i !== index));
+        setIsDirty(true);
+      },
+    });
+  };
+
+  // Xóa ảnh mới
+  const removeNewImage = (index) => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc muốn xóa ảnh này?",
+      okText: "Xóa",
+      cancelText: "Hủy",
+      okType: "danger",
+      onOk: () => {
+        // Revoke preview URL to free memory
+        URL.revokeObjectURL(newImagePreviews[index]);
+        
+        setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+        setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+        setIsDirty(true);
+      },
+    });
   };
 
   const handleSave = async () => {
+    // Validation
     if (!product.name?.trim()) {
       message.error("Vui lòng nhập tên sản phẩm");
       return;
@@ -190,11 +221,54 @@ const ProductAdminPanel = () => {
 
     try {
       setSaving(true);
-      await ProductService.updateProduct(product.id, product);
+
+      // Tạo FormData
+      const formData = new FormData();
+
+      // Thêm thông tin sản phẩm cơ bản
+      formData.append("name", product.name);
+      formData.append("slug", product.slug);
+      formData.append("description", product.description || "");
+      formData.append("price", product.price);
+      formData.append("compare_price", product.compare_price || 0);
+      formData.append("material", product.material || "");
+      formData.append("care_instructions", product.care_instructions || "");
+      formData.append("is_featured", product.is_featured);
+      formData.append("is_active", product.is_active);
+
+      // Thêm nested objects dạng JSON
+      formData.append("category", JSON.stringify(product.category || {}));
+      formData.append("brand", JSON.stringify(product.brand || {}));
+      formData.append("dimensions", JSON.stringify(product.dimensions || {}));
+      formData.append("dressStyle", JSON.stringify(product.dressStyle || {}));
+      formData.append("variants", JSON.stringify(product.variants || []));
+      formData.append("tags", JSON.stringify(product.tags || []));
+
+      // Thêm ảnh cũ (giữ nguyên URL)
+      formData.append("existing_images", JSON.stringify(existingImages));
+
+      // Thêm ảnh mới (File objects)
+      newImageFiles.forEach((file, index) => {
+        formData.append(`new_images`, file);
+      });
+
+      // Gửi request
+      await ProductService.updateProduct(product.id, formData);
+      
       toast.success("Lưu sản phẩm thành công!");
       setIsDirty(false);
+      
+      // Cleanup và refresh
+      newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      setNewImageFiles([]);
+      setNewImagePreviews([]);
+      
+      // Fetch lại data để cập nhật ảnh mới
+      await fetchProductData();
+
     } catch (error) {
-      message.error("Có lỗi khi lưu sản phẩm");
+      console.error("Save error:", error);
+      message.error(error.response?.data?.message || "Có lỗi khi lưu sản phẩm");
     } finally {
       setSaving(false);
     }
@@ -222,6 +296,8 @@ const ProductAdminPanel = () => {
     product.compare_price > 0
       ? Math.round((1 - product.price / product.compare_price) * 100)
       : 0;
+
+  const totalImages = existingImages.length + newImageFiles.length;
 
   const variantColumns = [
     {
@@ -576,26 +652,43 @@ const ProductAdminPanel = () => {
     {
       key: "images",
       label: (
-        <Badge count={product.images.length} offset={[10, 0]}>
+        <Badge count={totalImages} offset={[10, 0]}>
           Hình ảnh
         </Badge>
       ),
       children: (
         <div>
-          <Title level={4} className="mb-4">
-            Hình ảnh sản phẩm
-          </Title>
+          <div className="mb-4 flex justify-between items-center">
+            <Title level={4}>Hình ảnh sản phẩm</Title>
+            <Text type="secondary">
+              {existingImages.length} ảnh hiện tại • {newImageFiles.length} ảnh mới
+            </Text>
+          </div>
+
+          {newImageFiles.length > 0 && (
+            <Alert
+              message={`Bạn đang thêm ${newImageFiles.length} ảnh mới. Nhớ nhấn "Lưu thay đổi" để upload.`}
+              type="info"
+              showIcon
+              closable
+              className="mb-4"
+            />
+          )}
 
           <Row gutter={16}>
-            {product.images.map((img, index) => (
-              <Col span={6} key={index}>
+            {/* Hiển thị ảnh cũ */}
+            {existingImages.map((img, index) => (
+              <Col span={6} key={`existing-${index}`} className="mb-4">
                 <Card
                   hoverable
                   cover={
-                    <img
-                      alt={`Product ${index + 1}`}
+                    <Image
+                      alt={`Ảnh ${index + 1}`}
                       src={img}
                       className="h-48 object-cover"
+                      preview={{
+                        mask: "Xem ảnh",
+                      }}
                     />
                   }
                   actions={[
@@ -603,22 +696,73 @@ const ProductAdminPanel = () => {
                       type="text"
                       danger
                       icon={<DeleteOutlined />}
-                      onClick={() => removeImage(index)}
+                      onClick={() => removeExistingImage(index)}
                     >
                       Xóa
                     </Button>,
                   ]}
                 >
-                  <Card.Meta description={`Ảnh ${index + 1}`} />
+                  <Card.Meta 
+                    description={
+                      <Tag color="blue">Ảnh hiện tại #{index + 1}</Tag>
+                    } 
+                  />
                 </Card>
               </Col>
             ))}
-            <Col span={6}>
-              <Upload listType="picture-card" showUploadList={false}>
-                <div className="flex flex-col items-center justify-center h-48">
-                  <PlusOutlined className="text-2xl mb-2" />
-                  <div>Thêm ảnh</div>
-                </div>
+
+            {/* Hiển thị ảnh mới */}
+            {newImagePreviews.map((preview, index) => (
+              <Col span={6} key={`new-${index}`} className="mb-4">
+                <Card
+                  hoverable
+                  cover={
+                    <Image
+                      alt={`Ảnh mới ${index + 1}`}
+                      src={preview}
+                      className="h-48 object-cover"
+                      preview={{
+                        mask: "Xem ảnh",
+                      }}
+                    />
+                  }
+                  actions={[
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => removeNewImage(index)}
+                    >
+                      Xóa
+                    </Button>,
+                  ]}
+                >
+                  <Card.Meta 
+                    description={
+                      <Tag color="green">Ảnh mới #{index + 1}</Tag>
+                    } 
+                  />
+                </Card>
+              </Col>
+            ))}
+
+            {/* Upload button */}
+            <Col span={6} className="mb-4">
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                beforeUpload={() => false}
+                onChange={handleImageUpload}
+              >
+                <Card hoverable className="h-full flex items-center justify-center">
+                  <div className="flex flex-col items-center justify-center h-48 cursor-pointer">
+                    <PlusOutlined className="text-3xl mb-2 text-gray-400" />
+                    <div className="text-gray-500">Thêm ảnh mới</div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      Tối đa 5MB
+                    </div>
+                  </div>
+                </Card>
               </Upload>
             </Col>
           </Row>
@@ -682,7 +826,6 @@ const ProductAdminPanel = () => {
       ),
     },
   ];
-  console.log(product);
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
