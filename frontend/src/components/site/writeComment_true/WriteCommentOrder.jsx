@@ -20,6 +20,7 @@ function WriteCommentOrder() {
     const [submitting, setSubmitting] = useState(false);
     const [userName, setUserName] = useState('');
 
+
     // Lấy thông tin user từ localStorage
     useEffect(() => {
         const userDetail = localStorage.getItem('userDetail');
@@ -59,7 +60,7 @@ function WriteCommentOrder() {
         };
 
         fetchProduct();
-    }, [slug]); // Dependency là slug từ URL params
+    }, [slug]);
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
@@ -84,11 +85,12 @@ function WriteCommentOrder() {
                 return;
             }
 
+            const user = JSON.parse(localStorage.getItem('userDetail'));
             // Build FormData
             const formData = new FormData();
             formData.append("rating", rating);
             formData.append("content", reviewContent);
-            formData.append("user_id", "6904c6c08e5da0bb610c5fc2"); // TODO: replace with real user
+            formData.append("user_id", user.userId);  // TODO: replace with real user
             formData.append("product_id", productId);
 
             reviewImages.forEach(img => {

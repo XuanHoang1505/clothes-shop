@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Package, Calendar, User, MapPin, CreditCard, ChevronDown, ChevronUp, Search, Filter } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { MessageSquare } from 'lucide-react';
+import OrderService from '@/services/site/OrderService';
+import ProductService from '@/services/site/ProductService';
+import { Modal } from 'antd';
 
 function OrderManagement() {
     const [orders, setOrders] = useState([]);
@@ -9,131 +12,63 @@ function OrderManagement() {
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilterMenu, setShowFilterMenu] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+
+
 
     const navigate = useNavigate();
-    useEffect(() => {
-
-    }, []);
-
 
     useEffect(() => {
-        // Giả lập load đơn hàng từ API/localStorage
-        // Trong thực tế, bạn sẽ fetch từ backend
-        const mockOrders = [
-            {
-                id: 'ORD001',
-                orderCode: 'SHOP20241119001',
-                customer: {
-                    fullName: 'Nguyễn Văn A',
-                    email: 'nguyenvana@email.com',
-                    phone: '0123456789'
-                },
-                address: {
-                    houseNumber: '123 Nguyễn Trãi',
-                    province: 'Hà Nội',
-                    ward: 'Đống Đa',
-                    note: 'Gọi trước khi giao'
-                },
-                items: [
-                    {
-                        name: 'T-shirt Graphic Design',
-                        quantity: 2,
-                        price: 260000,
-                        size: 'L',
-                        color: 'Black',
-                        image: null
-                    }
-                ],
-                payment: {
-                    method: 'cod',
-                    amount: 535000
-                },
-                subtotal: 520000,
-                discount: 0,
-                deliveryFee: 15000,
-                status: 'pending',
-                createdAt: '2024-11-19T10:30:00Z'
-            },
-            {
-                id: 'ORD002',
-                orderCode: 'SHOP20241119002',
-                customer: {
-                    fullName: 'Trần Thị B',
-                    email: 'tranthib@email.com',
-                    phone: '0987654321'
-                },
-                address: {
-                    houseNumber: '456 Lê Lợi',
-                    province: 'Đà Nẵng',
-                    ward: 'Hải Châu',
-                    note: ''
-                },
-                items: [
-                    {
-                        name: 'Skinny Fit Jeans',
-                        quantity: 1,
-                        price: 450000,
-                        size: 'M',
-                        color: 'Blue',
-                        image: null
-                    },
-                    {
-                        name: 'Checkered Shirt',
-                        quantity: 1,
-                        price: 320000,
-                        size: 'L',
-                        color: 'Red',
-                        image: null
-                    }
-                ],
-                payment: {
-                    method: 'bank',
-                    amount: 785000
-                },
-                subtotal: 770000,
-                discount: 0,
-                deliveryFee: 15000,
-                status: 'confirmed',
-                createdAt: '2024-11-19T09:15:00Z'
-            },
-            {
-                id: 'ORD003',
-                orderCode: 'SHOP20241118001',
-                customer: {
-                    fullName: 'Lê Văn C',
-                    email: 'levanc@email.com',
-                    phone: '0912345678'
-                },
-                address: {
-                    houseNumber: '789 Trần Hưng Đạo',
-                    province: 'TP.HCM',
-                    ward: 'Quận 1',
-                    note: 'Giao giờ hành chính'
-                },
-                items: [
-                    {
-                        name: 'Polo Shirt',
-                        quantity: 3,
-                        price: 280000,
-                        size: 'XL',
-                        color: 'White',
-                        image: null
-                    }
-                ],
-                payment: {
-                    method: 'card',
-                    amount: 855000
-                },
-                subtotal: 840000,
-                discount: 0,
-                deliveryFee: 15000,
-                status: 'completed',
-                createdAt: '2024-11-18T14:20:00Z'
-            }
-        ];
-
-        setOrders(mockOrders);
+        fetchOrders();
     }, []);
+
+    const fetchOrders = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const userDetailStr = localStorage.getItem('userDetail');
+            if (!userDetailStr) throw new Error('Không tìm thấy thông tin người dùng.');
+
+            const userDetail = JSON.parse(userDetailStr);
+            if (!userDetail.email) throw new Error('Email không hợp lệ.');
+
+            // Lấy dữ liệu từ API
+            const response = await OrderService.getOrdersByEmail(userDetail.email);
+
+            // map lại dữ liệu để phù hợp component
+            const mappedOrders = response.orders.map(order => ({
+                id: order.id,
+                orderCode: order.order_code,
+                customer: order.customer_info,
+                address: order.shipping_address,
+                items: order.items,
+                payment: {
+                    amount: order.total,
+                    method: order.payment_method
+                },
+                status: order.order_status,
+                subtotal: order.subtotal,
+                discount: order.discount,
+                deliveryFee: order.delivery_fee,
+                note: order.note,
+                createdAt: order.created_at
+            }));
+
+            setOrders(mappedOrders);
+
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+            setError(err.message || 'Không thể tải đơn hàng.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     const formatNumber = (num) => {
         return new Intl.NumberFormat('vi-VN').format(num);
@@ -160,8 +95,6 @@ function OrderManagement() {
         return colors[status] || 'bg-gray-100 text-gray-800';
     };
 
-
-
     const getPaymentMethodText = (method) => {
         const methods = {
             cod: 'Thanh toán khi nhận hàng',
@@ -170,6 +103,7 @@ function OrderManagement() {
         };
         return methods[method] || method;
     };
+
 
     const toggleOrder = (orderId) => {
         setExpandedOrder(expandedOrder === orderId ? null : orderId);
@@ -198,9 +132,82 @@ function OrderManagement() {
         cancelled: orders.filter(o => o.status === 'cancelled').length
     };
 
+    // Loading state
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+                    <p className="text-gray-600">Đang tải đơn hàng...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center max-w-md">
+                    <Package size={48} className="mx-auto text-red-500 mb-4" />
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">Có lỗi xảy ra</h3>
+                    <p className="text-gray-600 mb-4">{error}</p>
+                    <button
+                        onClick={fetchOrders}
+                        className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                        Thử lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const handleWriteComment = (order) => {
+        setSelectedOrder(order);
+        setSelectedProduct(null);
+        setShowProductModal(true);
+    };
+
+    const handleProductSelect = (product) => {
+        setSelectedProduct(product);
+    };
+
+    const handleConfirmSelection = async () => {
+        if (!selectedProduct || !selectedOrder) return;
+
+        try {
+            // Gọi API lấy thông tin sản phẩm
+            const productData = await ProductService.getProductById(selectedProduct.product_id);
+            console.log(productData);
+
+
+            if (!productData.data.slug) {
+                alert('Không tìm thấy thông tin sản phẩm. Vui lòng thử lại.');
+                return;
+            }
+
+            navigate(`/write-comment-order/${productData.data.slug}`, {
+                state: {
+                    orderId: selectedOrder.id,
+                    orderCode: selectedOrder.orderCode,
+                    productId: selectedProduct.product_id,
+                    productName: selectedProduct.name,
+                    item: selectedProduct
+                }
+            });
+
+            setShowProductModal(false);
+            setSelectedProduct(null);
+            setSelectedOrder(null);
+        } catch (error) {
+            console.error('Error fetching product:', error);
+            alert('Có lỗi xảy ra khi tải thông tin sản phẩm. Vui lòng thử lại.');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
-
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex items-center justify-between mb-8">
@@ -460,13 +467,7 @@ function OrderManagement() {
                                                         ✓ Đơn hàng hoàn thành
                                                     </button>
                                                     <button
-                                                        onClick={() => navigate('/write-comment-order', {
-                                                            state: {
-                                                                orderId: order.id,
-                                                                orderCode: order.orderCode,
-                                                                items: order.items
-                                                            }
-                                                        })}
+                                                        onClick={() => handleWriteComment(order)}
                                                         className="px-6 bg-yellow-500 text-white py-3 rounded-lg font-medium hover:bg-yellow-600 transition-colors flex items-center gap-2"
                                                     >
                                                         <MessageSquare size={18} />
@@ -491,6 +492,95 @@ function OrderManagement() {
                     )}
                 </div>
             </div>
+
+
+            {/* Product Selection Modal */}
+            <Modal
+                title={
+                    <div>
+                        <h3 className="text-xl font-bold">Chọn sản phẩm để đánh giá</h3>
+                        <p className="text-sm text-gray-600 mt-1">Đơn hàng: {selectedOrder?.orderCode || '—'}</p>
+                    </div>
+                }
+                open={showProductModal}
+                onCancel={() => {
+                    setShowProductModal(false);
+                    setSelectedProduct(null);
+                    setSelectedOrder(null);
+                }}
+                footer={[
+                    <button
+                        key="cancel"
+                        onClick={() => {
+                            setShowProductModal(false);
+                            setSelectedProduct(null);
+                            setSelectedOrder(null);
+                        }}
+                        className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors mr-3"
+                    >
+                        Hủy
+                    </button>,
+                    <button
+                        key="submit"
+                        onClick={handleConfirmSelection}
+                        disabled={!selectedProduct}
+                        className={`px-6 py-2 rounded-lg font-medium transition-colors ${selectedProduct
+                            ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                    >
+                        Viết đánh giá
+                    </button>
+                ]}
+                width={700}
+                centered
+            >
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                    {(selectedOrder?.items ?? []).map((item, index) => {
+                        const key = item.id || item.product_id || index;
+                        return (
+                            <label
+                                key={key}
+                                className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
+                            >
+                                {/* Radio button */}
+                                <input
+                                    type="radio"
+                                    name="productSelect"
+                                    checked={selectedProduct === item}
+                                    onChange={() => setSelectedProduct(item)}
+                                    className="w-5 h-5 mr-4 cursor-pointer accent-yellow-500"
+                                />
+
+                                {/* Product Image */}
+                                <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden mr-4 flex-shrink-0">
+                                    {item.image ? (
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">No image</div>
+                                    )}
+                                </div>
+
+                                {/* Product Info */}
+                                <div className="flex-1">
+                                    <h5 className="font-medium text-lg">{item.name || 'Sản phẩm'}</h5>
+
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        {item.size && `Size: ${item.size}`}
+                                        {item.color && ` • ${item.color}`}
+                                    </p>
+
+                                    <div className="flex justify-between items-center mt-2">
+                                        <span className="text-sm text-gray-600">Số lượng: {item.quantity ?? 1}</span>
+                                        <span className="font-semibold text-yellow-600">{formatNumber((item.price ?? 0) * (item.quantity ?? 1))} đ</span>
+                                    </div>
+                                </div>
+                            </label>
+                        );
+                    })}
+                </div>
+            </Modal>
+
 
         </div>
     );

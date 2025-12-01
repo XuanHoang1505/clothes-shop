@@ -22,6 +22,7 @@ import Page404 from "@pages/site/page404/Page404";
 
 import AdminLayout from "@/layouts/admin/AdminLayout";
 import PrivateRoute from "@/utils/PrivateRoute";
+
 import SiteLayout from "@/layouts/site/SiteLayout";
 import AccountLayout from "@/layouts/site/AccountLayout";
 
@@ -38,7 +39,6 @@ import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingF
 import CODReturn from "./pages/site/cod/CODReturn";
 
 import WriteCommentOrder from "./components/site/writeComment_true/WriteCommentOrder";
-import CategoryPage from "./pages/site/category/CategoryPage"; // <-- Bạn cần import trang này nếu có
 
 
 function App() {
@@ -97,7 +97,6 @@ function App() {
               </Route>
 
               {/* MERGE CẢ 2 NHÁNH */}
-              <Route path="category" element={<CategoryPage />} />
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
               <Route path="product/:slug" element={<ProductDetailsPage />} />

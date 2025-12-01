@@ -19,4 +19,10 @@ class ReviewRepository implements ReviewRepositoryInterface
             ->orderBy('created_at', 'desc')
             ->get();
     }
+    public function findReviewByOrderId($orderId)
+    {
+        return Review::with('user')
+            ->where("order_id", $orderId)
+            ->first();
+    }
 }

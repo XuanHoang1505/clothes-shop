@@ -3,19 +3,23 @@
 namespace App\Providers;
 
 use App\Repositories\Eloquent\DiscountRepository;
+use App\Repositories\Eloquent\OrderRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\ReviewRepository;
 use App\Repositories\Eloquent\UserRepository;
 use App\Repositories\Interfaces\DiscountRepositoryInterface;
+use App\Repositories\Interfaces\OrderRepositoryInterface;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use App\Repositories\Interfaces\ReviewRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Services\CloudinaryService;
 use App\Services\Implementations\DiscountService;
+use App\Services\Implementations\OrderService;
 use App\Services\Implementations\ProductService;
 use App\Services\Implementations\ReviewService;
 use App\Services\Implementations\UserService;
 use App\Services\Interfaces\DiscountServiceInterface;
+use App\Services\Interfaces\OrderServiceInterface;
 use App\Services\Interfaces\ProductServiceInterface;
 use App\Services\Interfaces\ReviewServiceInterface;
 use App\Services\Interfaces\UserServiceInterface;
@@ -53,6 +57,12 @@ class AppServiceProvider extends ServiceProvider
             UserServiceInterface::class,
             UserService::class
         );
+        $this->app->bind(
+            OrderServiceInterface::class,
+            OrderService::class
+        );
+
+
         // Bind Repository
         $this->app->bind(
             ProductRepositoryInterface::class,
@@ -71,6 +81,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             UserRepositoryInterface::class, 
             UserRepository::class
+        );
+        $this->app->bind(
+            OrderRepositoryInterface::class,
+            OrderRepository::class
         );
 
         $this->app->singleton(OtpService::class, function ($app) {

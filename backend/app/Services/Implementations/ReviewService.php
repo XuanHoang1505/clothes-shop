@@ -15,6 +15,25 @@ class ReviewService implements ReviewServiceInterface
         $this->reviewRepository = $reviewRepository;
     }
 
+    public function getReviewByOrderId ($orderId): array
+    {
+        $review = $this->reviewRepository->findReviewByOrderId($orderId);
+
+        if (!$review) {
+            return [
+                "success" => false,
+                "message" => "No review found for this order",
+                "data" => null
+            ];
+        }
+
+        return [
+            "success" => true,
+            "message" => "Review retrieved successfully",
+            "data" => $review
+        ];
+    }
+    
     public function getReviewByIdProduct($idProduct): array    
     {   
         $reviews = $this->reviewRepository->findReviewsByIdProduct($idProduct);
