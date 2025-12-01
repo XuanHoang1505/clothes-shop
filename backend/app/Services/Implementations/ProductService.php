@@ -339,7 +339,7 @@ class ProductService implements ProductServiceInterface
     public function updateProduct(string $id, array $data): array
     {
         $uploadedImageUrls = [];
-        $oldImageUrls = [];
+        $imagesToDelete = [];
         
         try {
             $product = $this->productRepository->findById($id);
@@ -351,26 +351,50 @@ class ProductService implements ProductServiceInterface
                 ];
             }
 
-            // Lưu lại ảnh cũ để xóa sau
-            $oldImageUrls = $product->images ?? [];
-
-            // Upload ảnh mới nếu có
-            if (isset($data['images']) && is_array($data['images'])) {
-                $uploadedImageUrls = $this->uploadImages($data['images']);
-                $data['images'] = $uploadedImageUrls;
+            // Lấy ảnh cũ hiện tại
+            $currentImages = $product->images ?? [];
+            
+            // Xử lý ảnh
+            if (isset($data['existing_images']) || isset($data['new_images'])) {
+                // 1. Parse existing_images từ JSON string
+                $existingImages = [];
+                if (isset($data['existing_images'])) {
+                    $existingImages = is_string($data['existing_images']) 
+                        ? json_decode($data['existing_images'], true) 
+                        : $data['existing_images'];
+                }
+                
+                // 2. Upload ảnh mới nếu có
+                if (isset($data['new_images']) && is_array($data['new_images'])) {
+                    $uploadedImageUrls = $this->uploadImages($data['new_images']);
+                }
+                
+                // 3. Merge: existing + newly uploaded
+                $finalImages = array_merge($existingImages, $uploadedImageUrls);
+                $data['images'] = $finalImages;
+                
+                // 4. Tìm ảnh cần xóa (ảnh cũ KHÔNG còn trong existing_images)
+                $imagesToDelete = array_diff($currentImages, $existingImages);
             }
+            
+            // Loại bỏ các key không cần thiết
+            unset($data['existing_images']);
+            unset($data['new_images']);
 
+            // Update product
             $updated = $this->productRepository->update($id, $data);
 
-            // Xóa ảnh cũ trên Cloudinary sau khi update thành công
-            if (!empty($oldImageUrls) && isset($data['images'])) {
-                $this->cleanupImages($oldImageUrls);
+            // Xóa ảnh cũ đã bị remove trên Cloudinary
+            if (!empty($imagesToDelete)) {
+                $this->cleanupImages($imagesToDelete);
             }
 
             return [
                 'success' => true,
-                'message' => 'Cập nhật sản phẩm thành công'
+                'message' => 'Cập nhật sản phẩm thành công',
+                'data' => $updated
             ];
+            
         } catch (\Exception $e) {
             // Rollback: xóa ảnh mới đã upload nếu update thất bại
             if (!empty($uploadedImageUrls)) {
@@ -379,8 +403,8 @@ class ProductService implements ProductServiceInterface
 
             Log::error('Error updating product', [
                 'id' => $id,
-                'data' => $data,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return [

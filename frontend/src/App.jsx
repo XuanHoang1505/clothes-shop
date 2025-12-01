@@ -16,7 +16,6 @@ import ProductManagement from "./pages/admin/productManagement/ProductManagement
 
 import VNPayReturn from "./pages/site/vnpay/VNPayReturn";
 
-
 import Page403 from "@/pages/site/page403/Page403";
 import Page500 from "@pages/page500/Page500";
 import Page404 from "@pages/site/page404/Page404";
@@ -37,7 +36,7 @@ import ProductCreateForm from "./pages/admin/productManagement/ProductCreateForm
 import OrderManagement from "./pages/site/OrderManage/OrderManage";
 import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
 import CODReturn from "./pages/site/cod/CODReturn";
-
+import AdminOrderManagement from "./pages/admin/orderManagement/AdminOrderManagement";
 
 function App() {
   const { user } = useContext(UserContext);
@@ -67,7 +66,7 @@ function App() {
               <Route path="product/:slug" element={<ProductAdminPanel />} />
               <Route path="product/create" element={<ProductCreateForm />} />
               <Route path="shipping-fees" element={<ShippingFeeManagement />} />
-
+              <Route path="orders" element={<AdminOrderManagement />} />
             </Route>
 
             {/* SITE */}

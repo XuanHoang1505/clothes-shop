@@ -71,7 +71,7 @@ const filtersProduct = async (current = 1,  pageSize = 9, filters= {} ) => {
         ...filters
       }
     });
-    return response.data;
+    return response.data.data;
   } catch (error) {
     handleErrorResponse(error);
     throw error;
@@ -125,7 +125,22 @@ const createProduct = async (productData) => {
 // ✏️ Cập nhật sản phẩm
 const updateProduct = async (id, productData) => {
   try {
-    const response = await axiosInstance.put(`${API_URL}/${id}`, productData);
+    // Kiểm tra nếu có file thì dùng FormData
+    let dataToSend = productData;
+    let headers = {};
+
+    // Nếu productData là FormData thì giữ nguyên
+    if (productData instanceof FormData) {
+      dataToSend = productData;
+      headers = {
+        'Content-Type': 'multipart/form-data'
+      };
+    }
+
+    const response = await axiosInstance.put(`${API_URL}/${id}`, dataToSend, {
+      headers
+    });
+    
     return response.data;
   } catch (error) {
     handleErrorResponse(error);

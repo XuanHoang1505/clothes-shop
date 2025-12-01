@@ -88,7 +88,7 @@ class ProductController extends Controller
         return response()->json($result);
     }
 
-    public function findBySlug  ($slug)
+    public function findBySlug($slug)
     {
         $product = $this->productService->getProductBySlug($slug);
         return new ProductResource($product);
