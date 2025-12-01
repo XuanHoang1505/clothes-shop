@@ -43,7 +43,9 @@ Route::prefix('products')->group(function () {
     Route::get('/category/{slug}', [ProductController::class, 'getByCategory']);
 
     Route::get('/{id}/check-stock', [ProductController::class, 'checkStock']);
-    Route::get('/{slug}', [ProductController::class, 'findBySlug']); 
+    Route::get('/{id}', [ProductController::class, 'findById']); 
+    Route::get('/slug/{slug}', [ProductController::class, 'findBySlug']); 
+
     
     // ===== ADMIN ROUTES =====
     // Route::middleware(['auth:api', 'admin'])->group(function () {
@@ -74,6 +76,7 @@ Route::get('/provinces/{code}/wards', [AddressController::class, 'getWards']);
 
 Route::post('/reviews', [ReviewController::class, 'createReview']);
 Route::get( '/reviews/{productId}', [ReviewController::class,'getProductByIdProduct']);
+Route::get( '/review/order/{orderId}', [ReviewController::class,'getReviewByOrderId']);
 
 Route::prefix('admin/users')->group(function () {
     Route::get('/', [UserController::class, 'index']);

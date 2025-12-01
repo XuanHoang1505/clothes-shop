@@ -6,16 +6,9 @@ import ReviewService from '@/services/site/ReviewService';
 function WriteComment({ productSlug: propSlug }) {
     const [selectedTab, setSelectedTab] = useState('reviews');
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
-    const [showReviewForm, setShowReviewForm] = useState(false);
-    const [hoverRating, setHoverRating] = useState(0);
-    const [rating, setRating] = useState(0);
-    const [reviewName, setReviewName] = useState('');
-    const [reviewContent, setReviewContent] = useState('');
-    const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [reviewImages, setReviewImages] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
 
@@ -85,7 +78,6 @@ function WriteComment({ productSlug: propSlug }) {
                 const productId = res.data?.id;
                 const response = await ReviewService.getReviewsByProduct(productId);
                 if (response?.success && response?.data) {
-                    // Transform data from API to UI format
                     const transformedReviews = response.data.map(review => ({
                         id: review.id,
                         name: review.user?.name || 'Anonymous',
@@ -94,8 +86,7 @@ function WriteComment({ productSlug: propSlug }) {
                         images: review.images || [],
                         date: (() => {
                             if (!review.created_at) return "Posted on Unknown date";
-
-                            const [datePart, timePart] = review.created_at.split(" "); // ['17-11-2025', '14:38']
+                            const [datePart, timePart] = review.created_at.split(" ");
                             return `Posted on ${timePart} ${datePart}`;
                         })(),
                         verified: true
@@ -151,102 +142,6 @@ function WriteComment({ productSlug: propSlug }) {
         return stars;
     };
 
-    const handleSubmitReview = async (e) => {
-        e.preventDefault();
-
-        if (reviewContent.trim().length < 20) {
-            alert("Nội dung đánh giá phải có ít nhất 20 ký tự.");
-            return;
-        }
-
-        if (rating === 0) {
-            alert("Vui lòng chọn số sao đánh giá.");
-            return;
-        }
-
-        try {
-            // Get product id
-            const res = await ProductService.getProductBySlug(productSlug);
-            const productId = res.data?.id;
-            if (!productId) {
-                alert("Không tìm thấy sản phẩm, vui lòng thử lại!");
-                return;
-            }
-
-            // Build FormData
-            const formData = new FormData();
-            formData.append("rating", rating);
-            formData.append("content", reviewContent);
-            formData.append("user_id", "6904c6c08e5da0bb610c5fc2"); // TODO: replace with real user
-            formData.append("product_id", productId);
-
-            reviewImages.forEach(img => {
-                formData.append("images[]", img.file);
-            });
-
-            // Submit API
-            const result = await ReviewService.createReview(formData);
-
-            if (!result?.success) {
-                alert(result?.message || "Gửi đánh giá thất bại, vui lòng thử lại.");
-                return;
-            }
-
-            // Add new review to UI
-            const newReview = {
-                id: result.data?._id,
-                name: reviewName,
-                rating,
-                comment: reviewContent,
-                images: result.data?.images ?? [],
-                date: `Posted on ${new Date().toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                })}`,
-                verified: true,
-            };
-
-            setReviews(prev => [newReview, ...prev]);
-
-            // Reset form
-            setReviewName("");
-            setReviewContent("");
-            setRating(0);
-            setHoverRating(0);
-            setReviewImages([]);
-            setShowReviewForm(false);
-
-            // Toast notification
-            setShowSuccessToast(true);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-            setTimeout(() => setShowSuccessToast(false), 3000);
-
-        } catch (error) {
-            console.error("Error submitting review:", error);
-            alert("Có lỗi xảy ra khi gửi đánh giá, vui lòng thử lại.");
-        }
-    };
-
-    const getRatingEmoji = (stars) => {
-        if (stars === 5) return { emoji: '⭐', text: 'Tuyệt vời!', color: 'text-yellow-600' };
-        if (stars === 4) return { emoji: '😊', text: 'Rất tốt!', color: 'text-green-600' };
-        if (stars === 3) return { emoji: '👍', text: 'Ổn!', color: 'text-blue-600' };
-        if (stars === 2) return { emoji: '😐', text: 'Được!', color: 'text-orange-600' };
-        return { emoji: '😞', text: 'Cần cải thiện', color: 'text-red-600' };
-    };
-
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-
-        const newImages = files.map(file => ({
-            file,
-            url: URL.createObjectURL(file),
-        }));
-
-        setReviewImages(prev => [...prev, ...newImages]);
-    };
-
     if (loading) {
         return (
             <div className="max-w-7xl mx-auto px-4 py-8">
@@ -283,21 +178,6 @@ function WriteComment({ productSlug: propSlug }) {
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
-            {/* Success Toast */}
-            {showSuccessToast && (
-                <div className="fixed top-4 right-4 z-50 animate-slideInRight">
-                    <div className="bg-green-500 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                            <Check className="w-5 h-5 text-green-500" />
-                        </div>
-                        <div>
-                            <p className="font-semibold">Thành công!</p>
-                            <p className="text-sm">Cảm ơn bạn đã gửi đánh giá</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Tabs */}
             <div className="flex items-center justify-center border-b-2 border-gray-200 mb-8">
                 <button
@@ -426,176 +306,15 @@ function WriteComment({ productSlug: propSlug }) {
                 </div>
             )}
 
-            {/* Reviews Tab */}
+            {/* Reviews Tab - CHỈ HIỂN THỊ */}
             {selectedTab === 'reviews' && (
                 <>
-                    {/* Button: Write Review */}
-                    <div className="max-w-4xl mx-auto mb-8 text-center">
-                        <button
-                            onClick={() => setShowReviewForm(!showReviewForm)}
-                            className="px-8 py-3.5 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
-                        >
-                            {showReviewForm ? "Close review form" : "Write a review"}
-                        </button>
-                    </div>
-
-                    {/* Write Review Form */}
-                    {showReviewForm && (
-                        <div className="max-w-4xl mx-auto mb-12">
-                            <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-200">
-                                <h2 className="text-2xl font-bold text-gray-900 mb-1 text-center">Write your review</h2>
-                                <p className="text-gray-500 text-center mb-8">Share your experience about this product</p>
-
-                                <form onSubmit={handleSubmitReview} className="space-y-6">
-                                    {/* Name + Rating */}
-                                    <div className="grid md:grid-cols-2 gap-6">
-                                        {/* Name */}
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Your name <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={reviewName}
-                                                onChange={(e) => setReviewName(e.target.value)}
-                                                placeholder="Enter your name"
-                                                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:border-black focus:ring-2 focus:ring-gray-200 transition-all"
-                                            />
-                                        </div>
-
-                                        {/* Rating */}
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Your rating <span className="text-red-500">*</span>
-                                            </label>
-
-                                            <div className="bg-gray-50 rounded-xl py-3 px-4 border border-gray-300">
-                                                <div className="flex items-center space-x-2">
-                                                    {[1, 2, 3, 4, 5].map((star) => (
-                                                        <button
-                                                            key={star}
-                                                            type="button"
-                                                            onClick={() => setRating(star)}
-                                                            onMouseEnter={() => setHoverRating(star)}
-                                                            onMouseLeave={() => setHoverRating(0)}
-                                                            className="focus:outline-none transition-transform hover:scale-125"
-                                                        >
-                                                            <svg
-                                                                xmlns="http://www.w3.org/2000/svg"
-                                                                viewBox="0 0 24 24"
-                                                                fill={(hoverRating || rating) >= star ? '#FACC15' : '#D1D5DB'}
-                                                                className="w-8 h-8"
-                                                            >
-                                                                <path d="M12 .587l3.668 7.568L24 9.748l-6 5.84 1.417 8.251L12 19.771l-7.417 4.068L6 15.588 0 9.748l8.332-1.593z" />
-                                                            </svg>
-                                                        </button>
-                                                    ))}
-                                                </div>
-
-                                                {rating > 0 && (
-                                                    <p className={`mt-2 text-sm font-medium flex items-center gap-1 ${getRatingEmoji(rating).color}`}>
-                                                        <span>{getRatingEmoji(rating).emoji}</span>
-                                                        {getRatingEmoji(rating).text}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Review Content */}
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                            Review content <span className="text-red-500">*</span>
-                                        </label>
-                                        <textarea
-                                            rows="5"
-                                            required
-                                            value={reviewContent}
-                                            onChange={(e) => setReviewContent(e.target.value)}
-                                            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:border-black focus:ring-2 focus:ring-gray-200 resize-none"
-                                            placeholder="Share your thoughts about this product (minimum 20 characters)..."
-                                        ></textarea>
-
-                                        <div className="flex justify-between items-center mt-2">
-                                            <p className="text-xs text-gray-500">{reviewContent.length}/20 characters</p>
-                                            {reviewContent.length >= 20 && (
-                                                <span className="text-xs text-green-600 font-semibold flex items-center gap-1">
-                                                    <Check className="w-4 h-4" />
-                                                    Enough characters
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Upload Images */}
-                                        <div className="mt-3">
-                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                Upload images (optional)
-                                            </label>
-
-                                            <input
-                                                id="reviewImagesInput"
-                                                type="file"
-                                                accept="image/*"
-                                                multiple
-                                                name="images[]"
-                                                onChange={handleImageUpload}
-                                                className="hidden"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => document.getElementById('reviewImagesInput').click()}
-                                                className="px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors shadow"
-                                            >
-                                                Upload images
-                                            </button>
-
-                                            {/* Image Previews */}
-                                            {reviewImages.length > 0 && (
-                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
-                                                    {reviewImages.map((img, index) => (
-                                                        <div key={index} className="relative group aspect-square">
-                                                            <img
-                                                                src={img.url}
-                                                                alt={`Preview ${index + 1}`}
-                                                                className="w-full h-full object-cover rounded-xl border-2 border-gray-300"
-                                                            />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    URL.revokeObjectURL(img.url);
-                                                                    setReviewImages((prev) => prev.filter((_, i) => i !== index));
-                                                                }}
-                                                                className="absolute -top-2 -right-2 bg-black text-white w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold shadow-lg hover:bg-red-600 transition-all"
-                                                            >
-                                                                ✕
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Submit */}
-                                    <button
-                                        type="submit"
-                                        className="w-full py-3.5 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors"
-                                    >
-                                        Submit Review
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Reviews List Header */}
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 max-w-4xl mx-auto">
                         <h2 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">
                             Reviews ({reviews.length})
                         </h2>
                     </div>
-
 
                     {/* Reviews List */}
                     <div className="space-y-4 max-w-4xl mx-auto mb-12">
@@ -687,8 +406,7 @@ function WriteComment({ productSlug: propSlug }) {
                                         {faq.question}
                                     </span>
                                     <svg
-                                        className={`w-5 h-5 text-gray-500 transition-transform flex-shrink-0 ${openFaqIndex === faq.id ? 'rotate-180' : ''
-                                            }`}
+                                        className={`w-5 h-5 text-gray-500 transition-transform flex-shrink-0 ${openFaqIndex === faq.id ? 'rotate-180' : ''}`}
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"

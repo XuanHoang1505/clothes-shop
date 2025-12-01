@@ -36,6 +36,23 @@ class ReviewController extends Controller
         ], 200);
     }
 
+    public function getReviewByOrderId (string $orderId)
+    {
+        $result = $this->service->getReviewByOrderId(orderId: $orderId);
+
+        if (!$result) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No reviews found for this order',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => new ReviewResource($result["data"]),
+        ], 200);
+    }
+
     public function createReview(CreateReviewRequest $request)
     {
         try {

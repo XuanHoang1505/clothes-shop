@@ -16,13 +16,13 @@ import ProductManagement from "./pages/admin/productManagement/ProductManagement
 
 import VNPayReturn from "./pages/site/vnpay/VNPayReturn";
 
-
 import Page403 from "@/pages/site/page403/Page403";
 import Page500 from "@pages/page500/Page500";
 import Page404 from "@pages/site/page404/Page404";
 
 import AdminLayout from "@/layouts/admin/AdminLayout";
 import PrivateRoute from "@/utils/PrivateRoute";
+
 import SiteLayout from "@/layouts/site/SiteLayout";
 import AccountLayout from "@/layouts/site/AccountLayout";
 
@@ -37,6 +37,8 @@ import ProductCreateForm from "./pages/admin/productManagement/ProductCreateForm
 import OrderManagement from "./pages/site/OrderManage/OrderManage";
 import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingFeeManagement";
 import CODReturn from "./pages/site/cod/CODReturn";
+
+import WriteCommentOrder from "./components/site/writeComment_true/WriteCommentOrder";
 
 
 function App() {
@@ -53,6 +55,7 @@ function App() {
           }
         >
           <Routes>
+
             {/* ADMIN */}
             <Route
               path="/admin/"
@@ -67,11 +70,12 @@ function App() {
               <Route path="product/:slug" element={<ProductAdminPanel />} />
               <Route path="product/create" element={<ProductCreateForm />} />
               <Route path="shipping-fees" element={<ShippingFeeManagement />} />
-
             </Route>
+
 
             {/* SITE */}
             <Route path="/" element={<SiteLayout />}>
+
               <Route index element={<Home />} />
 
               {/* ACCOUNT */}
@@ -91,11 +95,16 @@ function App() {
                   element={<ChangePasswordPage user={user} />}
                 />
               </Route>
-              <Route path="/shop" element={<ShopPage />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/product/:slug" element={<ProductDetailsPage />} />
+
+              {/* MERGE CẢ 2 NHÁNH */}
+              <Route path="cart" element={<Cart />} />
+              <Route path="checkout" element={<Checkout />} />
+              <Route path="product/:slug" element={<ProductDetailsPage />} />
+              <Route path="write-comment-order/:slug" element={<WriteCommentOrder />} />
+
+              <Route path="shop" element={<ShopPage />} />
             </Route>
+
 
             {/* OTHER PAGES */}
             <Route path="/vnpay-return" element={<VNPayReturn />} />

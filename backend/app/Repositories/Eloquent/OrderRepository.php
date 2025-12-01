@@ -7,6 +7,7 @@ class OrderRepository implements OrderRepositoryInterface
 {
     public function getOrderByEmail(string $email)
     {
-        return Order::where('email', $email)->get();
+       return Order::where('customer_info->email', $email)
+                    ->orderBy('created_at', 'desc')->get();
     } 
 }

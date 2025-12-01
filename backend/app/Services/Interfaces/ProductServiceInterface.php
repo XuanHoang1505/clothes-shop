@@ -21,4 +21,5 @@ interface ProductServiceInterface
     public function deleteProduct(string $id): array;
     public function checkStock(string $id, int $quantity = 1): array;
     public function getProductBySlug (string $slug);
+    public function getProductById (string $id);
 }
