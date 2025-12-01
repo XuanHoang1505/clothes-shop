@@ -14,6 +14,7 @@ class Review extends Model
 
     protected $fillable = [
         'product_id',      // ObjectId
+        'order_id',
         'user_id',         // ObjectId
         'rating',          // int
         'content',         // string
@@ -22,6 +23,7 @@ class Review extends Model
 
     protected $casts = [
         'product_id' => 'string',
+        'order_id'   => 'string',
         'user_id'    => 'string',
         'images'     => 'array',
         'rating'     => 'integer',

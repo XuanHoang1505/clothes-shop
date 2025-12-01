@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Check, X, ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ProductService from '@/services/site/ProductService';
 import ReviewService from '@/services/site/ReviewService';
 
 function WriteCommentOrder() {
     const navigate = useNavigate();
     const { slug } = useParams();
+    const location = useLocation();
+    const { orderId } = location.state || {};
 
     const [hoverRating, setHoverRating] = useState(0);
     const [rating, setRating] = useState(0);
@@ -19,6 +21,8 @@ function WriteCommentOrder() {
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [userName, setUserName] = useState('');
+
+
 
 
     // Lấy thông tin user từ localStorage
@@ -37,6 +41,7 @@ function WriteCommentOrder() {
         }
     }, []);
 
+    
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -88,10 +93,12 @@ function WriteCommentOrder() {
             const user = JSON.parse(localStorage.getItem('userDetail'));
             // Build FormData
             const formData = new FormData();
+
             formData.append("rating", rating);
             formData.append("content", reviewContent);
             formData.append("user_id", user.userId);  // TODO: replace with real user
             formData.append("product_id", productId);
+            formData.append("order_id", orderId);
 
             reviewImages.forEach(img => {
                 formData.append("images[]", img.file);
