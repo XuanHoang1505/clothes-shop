@@ -61,6 +61,26 @@ const getProductsByCategory = async (categorySlug, page = 1, pageSize = 9) => {
   }
 };
 
+// 🔍 Search sản phẩm
+const searchProducts = async (keyword, current = 1, pageSize = 9) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/search`, {
+      params: {
+        keyword: keyword,
+        current: current,
+        pageSize: pageSize
+      }
+    });
+
+    return response.data;   // backend trả pagination + data
+  } catch (error) {
+    handleErrorResponse(error);
+    console.error("Lỗi khi search sản phẩm:", keyword, error);
+    throw error;
+  }
+};
+
+
 //Filter products
 const filtersProduct = async (current = 1, pageSize = 9, filters = {}) => {
   console.log(filters);
@@ -188,6 +208,7 @@ const ProductService = {
   getProductById,
   getProductBySlug,
   getProductsByCategory,
+  searchProducts,
   filtersProduct,
   createProduct,
   updateProduct,

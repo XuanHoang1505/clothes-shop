@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Product\CreateProductRequest;
 use App\Http\Requests\Product\FiltersRequest;
+use App\Http\Requests\Product\SearchRequest;
 use App\Http\Requests\Product\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Services\Interfaces\ProductServiceInterface;
@@ -27,6 +28,19 @@ class ProductController extends Controller
         $page = $request->input('current', 1);
         $pageSize = $request->input('pageSize', 9);
         $result = $this->productService->getAllProducts($page, $pageSize);
+
+        return response()->json($result);
+    }
+
+    public function search(SearchRequest $request)
+    {
+        $data = $request->validated();
+
+        $keyword = $data['keyword'];
+        $page = $request->input('current', 1);
+        $pageSize = $request->input('pageSize', 15);
+
+        $result = $this->productService->searchProducts($keyword, $page, $pageSize);
 
         return response()->json($result);
     }

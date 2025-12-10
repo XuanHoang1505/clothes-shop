@@ -10,7 +10,10 @@ import {
   FileTextOutlined,
   CalendarOutlined,
   BellOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  SkinOutlined,
+  EuroOutlined,
+  ShoppingCartOutlined
 } from '@ant-design/icons';
 
 export const menuConfig = {
@@ -19,74 +22,48 @@ export const menuConfig = {
       id: 'dashboard',
       label: 'Dashboard',
       icon: DashboardOutlined,
-      children: [
-        { label: 'Main', path: '/' },
-        { label: 'Analytics', path: 'admin/users' },
-        { label: 'Fintech', path: '/dashboard/fintech' }
-      ]
+      path: '/admin'
+    },
+    // {
+    //   id: 'ecommerce',
+    //   label: 'E-Commerce',
+    //   icon: ShoppingOutlined,
+    //   children: [
+    //     { label: 'Customers', path: '/ecommerce/customers' },
+    //     { label: 'Orders', path: '/ecommerce/orders' },
+    //     { label: 'Invoices', path: '/ecommerce/invoices' },
+    //     { label: 'Shop', path: '/ecommerce/shop' },
+    //     { label: 'Shop 2', path: '/ecommerce/shop-2' },
+    //     { label: 'Single Product', path: '/ecommerce/product' },
+    //     { label: 'Cart', path: '/ecommerce/cart' },
+    //     { label: 'Cart 2', path: '/ecommerce/cart-2' },
+    //     { label: 'Cart 3', path: '/ecommerce/cart-3' },
+    //     { label: 'Pay', path: '/ecommerce/pay' }
+    //   ]
+    // },  
+    {
+      id: 'user',
+      label: 'Users',
+      path: '/admin/users',
+      icon: TeamOutlined
     },
     {
-      id: 'ecommerce',
-      label: 'E-Commerce',
-      icon: ShoppingOutlined,
-      children: [
-        { label: 'Customers', path: '/ecommerce/customers' },
-        { label: 'Orders', path: '/ecommerce/orders' },
-        { label: 'Invoices', path: '/ecommerce/invoices' },
-        { label: 'Shop', path: '/ecommerce/shop' },
-        { label: 'Shop 2', path: '/ecommerce/shop-2' },
-        { label: 'Single Product', path: '/ecommerce/product' },
-        { label: 'Cart', path: '/ecommerce/cart' },
-        { label: 'Cart 2', path: '/ecommerce/cart-2' },
-        { label: 'Cart 3', path: '/ecommerce/cart-3' },
-        { label: 'Pay', path: '/ecommerce/pay' }
-      ]
+      id: 'product',
+      label: 'Products',
+      path: '/admin/products',
+      icon: SkinOutlined
     },
     {
-      id: 'community',
-      label: 'Community',
-      icon: TeamOutlined,
-      children: [
-        { label: 'Users - Tabs', path: '/community/users-tabs' },
-        { label: 'Users - Tiles', path: '/community/users-tiles' },
-        { label: 'Profile', path: '/community/profile' },
-        { label: 'Feed', path: '/community/feed' }
-      ]
+      id: 'shipping-fee',
+      label: 'Shipping Fees',
+      path: '/admin/shipping-fees',
+      icon: EuroOutlined
     },
     {
-      id: 'finance',
-      label: 'Finance',
-      icon: DollarOutlined,
-      children: [
-        { label: 'Cards', path: '/finance/cards' },
-        { label: 'Transactions', path: '/finance/transactions' },
-        { label: 'Transaction Details', path: '/finance/details' }
-      ]
-    },
-    {
-      id: 'messages',
-      label: 'Messages',
-      path: '/messages',
-      badge: 4,
-      icon: MessageOutlined
-    },
-    {
-      id: 'inbox',
-      label: 'Inbox',
-      path: '/inbox',
-      icon: FileTextOutlined
-    },
-    {
-      id: 'calendar',
-      label: 'Calendar',
-      path: '/calendar',
-      icon: CalendarOutlined
-    },
-    {
-      id: 'campaigns',
-      label: 'Campaigns',
-      path: '/campaigns',
-      icon: BellOutlined
+      id: 'order',
+      label: 'Orders',
+      path: '/admin/orders',
+      icon: ShoppingCartOutlined 
     },
     {
       id: 'settings',

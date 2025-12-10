@@ -55,6 +55,26 @@ class ProductRepository implements ProductRepositoryInterface
             ->paginate($perPage);
     }
 
+    public function search(string $keyword, int $page = 1, int $perPage = 12)
+    {
+        if (empty(trim($keyword))) {
+            return Product::where('is_active', true)
+                ->paginate($perPage, ['*'], 'page', $page);
+        }
+
+        $query = Product::where('is_active', true)
+            ->where(function($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                ->orWhere('description', 'like', "%{$keyword}%")
+                ->orWhere('slug', 'like', "%{$keyword}%")
+                ->orWhere('category.name', 'like', "%{$keyword}%")
+                ->orWhere('brand.name', 'like', "%{$keyword}%");
+            })
+            ->orderBy('created_at', 'desc');
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
+    }
+
     public function filter(array $filters,int $current, int $perPage = 9)
     {
         $query = Product::where('is_active', true);

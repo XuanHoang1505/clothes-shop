@@ -3,13 +3,13 @@
 import * as React from "react"
 import { addDays, format } from "date-fns"
 
-import { cn } from "../lib/utils"
-import { Calendar } from "./ui/calendar"
+import { cn } from "@/lib/utils"
+import { Calendar } from "@/components/admin/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "./ui/popover"
+} from "@/components/admin/ui/popover"
 
 export default function DatePickerWithRange({
   className,
