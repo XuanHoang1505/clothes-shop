@@ -11,6 +11,7 @@ interface ProductRepositoryInterface
     public function findByCategoryName(string $categoryName, int $perPage = 15);
     public function findByParentCategory(string $parentName, int $perPage = 15);
     public function filter(array $filters,int $current, int $perPage = 15);
+    public function search(string $keyword, int $page = 1, int $perPage = 12);
     public function getFeatured(int $limit = 10);
     public function getNew(int $limit = 10);
     public function getBestseller(int $limit = 10);

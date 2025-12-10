@@ -1,4 +1,4 @@
-import { User, ShoppingCart, LogOut, Settings, ShoppingBag, Heart, MapPin } from "lucide-react";
+import { User, ShoppingCart, LogOut, Settings, ShoppingBag, Heart, MapPin, Search, X } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, useNavigate } from "react-router-dom";
@@ -24,6 +24,8 @@ import { Dropdown } from "antd";
 
 const Header = () => {
   const [isBannerVisible, setIsBannerVisible] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const handleCloseBanner = () => {
     setIsBannerVisible(false);
   };
@@ -65,6 +67,29 @@ const Header = () => {
     logout(user.userId);
     updateUser(null);
     navigate("/");
+  };
+
+  // Handle search navigation
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    
+    if (query) {
+      navigate(`/search?q=${encodeURIComponent(query)}`);
+      setSearchQuery(""); // Clear after navigation
+    }
+  };
+
+  // Handle Enter key press
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch(e);
+    }
+  };
+
+  // Clear search input
+  const handleClearSearch = () => {
+    setSearchQuery("");
   };
 
   const menuItems = [
@@ -169,8 +194,9 @@ const Header = () => {
       <header className="border-b bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to={'/'} className="text-4xl font-extrabold cursor-pointer text-black">SHOP.CO</Link>
+          
           <nav className="hidden md:flex space-x-6 text-sm">
-            <NavLink to={'/category'} className={({ isActive }) => isActive ? "text-gray-900 font-semibold" : "hover:text-gray-600"}>
+            <NavLink to={'/shop'} className={({ isActive }) => isActive ? "text-gray-900 font-semibold" : "hover:text-gray-600"}>
               Shop
             </NavLink>
             <a href="#" className="hover:text-gray-600">
@@ -183,17 +209,35 @@ const Header = () => {
               Brands
             </a>
           </nav>
+          
           <div className="flex items-center space-x-4">
-            <input
-              type="text"
-              placeholder="Search for products..."
-              className="hidden md:block border rounded-full px-4 py-2 w-64"
-            />
+            {/* Search Input with Enter Key Support */}
+            <div className="hidden md:block relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Search for products..."
+                className="border rounded-full pl-10 pr-10 py-2 w-64 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
             <ShoppingCart
               size={24}
-              className="cursor-pointer"
+              className="cursor-pointer hover:text-gray-600 transition-colors"
               onClick={() => navigate("/cart")}
             />
+            
             {!user ? (
               <User
                 size={24}
@@ -228,6 +272,7 @@ const Header = () => {
           </div>
         </div>
       </header>
+
       <LoginSelectionModal
         show={showLoginSelectionModal}
         handleClose={() => dispatch(closeModal("showLoginSelectionModal"))}
@@ -327,4 +372,5 @@ const Header = () => {
     </>
   );
 };
+
 export default Header;

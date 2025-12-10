@@ -139,9 +139,7 @@ class ProductService implements ProductServiceInterface
     public function searchProducts(string $keyword, int $page = 1, int $pageSize = 15): array
     {
         try {
-            $products = $this->productRepository->filter([
-                'search' => $keyword
-            ], $pageSize);
+            $products = $this->productRepository->search($keyword, $page, $pageSize);
 
             return [
                 'success' => true,

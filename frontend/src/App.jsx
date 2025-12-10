@@ -39,7 +39,8 @@ import ShippingFeeManagement from "./pages/admin/shippingFeeManagement/ShippingF
 import CODReturn from "./pages/site/cod/CODReturn";
 import AdminOrderManagement from "./pages/admin/orderManagement/AdminOrderManagement";
 import WriteCommentOrder from "./components/site/writeComment_true/WriteCommentOrder";
-
+import Dashboard from "./pages/admin/dashboard/Dashboard";
+import SearchPage from "./pages/site/search/SearchPage";
 
 function App() {
   const { user } = useContext(UserContext);
@@ -55,7 +56,6 @@ function App() {
           }
         >
           <Routes>
-
             {/* ADMIN */}
             <Route
               path="/admin/"
@@ -65,6 +65,7 @@ function App() {
                 </PrivateRoute>
               }
             >
+              <Route index element={<Dashboard />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="products" element={<ProductManagement />} />
               <Route path="product/:slug" element={<ProductAdminPanel />} />
@@ -73,10 +74,8 @@ function App() {
               <Route path="orders" element={<AdminOrderManagement />} />
             </Route>
 
-
             {/* SITE */}
             <Route path="/" element={<SiteLayout />}>
-
               <Route index element={<Home />} />
 
               {/* ACCOUNT */}
@@ -101,11 +100,14 @@ function App() {
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
               <Route path="product/:slug" element={<ProductDetailsPage />} />
-              <Route path="write-comment-order/:slug" element={<WriteCommentOrder />} />
+              <Route
+                path="write-comment-order/:slug"
+                element={<WriteCommentOrder />}
+              />
 
               <Route path="shop" element={<ShopPage />} />
+              <Route path="search" element={<SearchPage />} />
             </Route>
-
 
             {/* OTHER PAGES */}
             <Route path="/vnpay-return" element={<VNPayReturn />} />

@@ -69,7 +69,7 @@ function LoginModal({
       toast.success(data.message);
 
       if (data.user.role === "ADMIN") {
-        navigate("/admin/users");
+        navigate("/admin");
       } else {
         handleCloseModal();
       }
