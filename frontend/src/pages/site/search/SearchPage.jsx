@@ -102,67 +102,57 @@ function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Search Section */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-3">Search Products</h1>
-            <p className="text-gray-600">
-              Find exactly what you're looking for
-            </p>
-          </div>
-
-          {/* Search Bar */}
-          <div onSubmit={handleSearch} className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-6 h-6" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch(e);
-                  }
-                }}
-                placeholder="Search for products..."
-                className="w-full pl-14 pr-14 py-5 border-2 rounded-full text-lg focus:outline-none focus:border-black transition-colors"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              )}
+      <div className="bg-white  shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch(e);
+                    }
+                  }}
+                  placeholder="Search for products..."
+                  className="w-full pl-12 pr-12 py-3 border-2 rounded-full focus:outline-none focus:border-black transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-black transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handleSearch}
+                disabled={!searchQuery.trim()}
+                className="bg-black text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+              >
+                Search
+              </button>
             </div>
-            <button
-              onClick={handleSearch}
-              disabled={!searchQuery.trim()}
-              className="w-full mt-4 bg-black text-white py-4 rounded-full text-lg font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Search
-            </button>
-          </div>
 
-          {/* Search Info */}
-          {hasSearched && !loading && (
-            <div className="text-center text-gray-600">
-              {products.length > 0 ? (
-                <span>
-                  Found{" "}
-                  <strong className="text-black">{pagination.total}</strong>{" "}
-                  results for{" "}
-                  <strong className="text-black">"{searchQuery}"</strong>
-                </span>
-              ) : (
-                <span className="text-red-600">
-                  No results found for "{searchQuery}"
-                </span>
-              )}
-            </div>
-          )}
+            {/* Search Info */}
+            {hasSearched && !loading && (
+              <div className="text-gray-600 whitespace-nowrap">
+                {products.length > 0 ? (
+                  <span>
+                    <strong className="text-black">{pagination.total}</strong> results
+                  </span>
+                ) : (
+                  <span className="text-red-600">No results</span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

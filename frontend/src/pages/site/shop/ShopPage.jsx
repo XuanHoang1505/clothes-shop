@@ -12,7 +12,7 @@ function ShopPage() {
     pageSize: 9,
     total: 0,
   });
-  
+
   const [appliedFilters, setAppliedFilters] = useState({
     categories: [],
     priceRange: [0, 2000000],
@@ -20,7 +20,7 @@ function ShopPage() {
     sizes: [],
     dressStyles: [],
   });
-  
+
   const [tempFilters, setTempFilters] = useState({
     categories: [],
     priceRange: [0, 2000000],
@@ -28,7 +28,7 @@ function ShopPage() {
     sizes: [],
     dressStyles: [],
   });
-  
+
   const [categories, setCategories] = useState([]);
   const [dressStyles, setDressStyles] = useState([]);
   const [sortBy, setSortBy] = useState("popular");
@@ -75,7 +75,7 @@ function ShopPage() {
     setLoading(true);
     try {
       let result;
-      
+
       if (hasActiveFilters(appliedFilters)) {
         const transformedFilters = {
           ...appliedFilters,
@@ -91,11 +91,11 @@ function ShopPage() {
       } else {
         result = await ProductService.getProducts(
           pagination.current,
-          pagination.pageSize,
+          pagination.pageSize
         );
       }
 
-      setProducts(result || []);
+      setProducts(result.data || []);
       setPagination((prev) => ({
         ...prev,
         total: result.total || 0,
@@ -109,7 +109,7 @@ function ShopPage() {
   };
 
   console.log(products);
-  
+
   const fetchCategories = async () => {
     try {
       const result = await ProductService.getCategories();
@@ -136,6 +136,10 @@ function ShopPage() {
   useEffect(() => {
     fetchCategories();
     fetchDressStyles();
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
   const handlePaginationChange = (page, pageSize) => {
@@ -175,7 +179,6 @@ function ShopPage() {
     }));
   };
 
-  
   const applyFilters = () => {
     setAppliedFilters({ ...tempFilters });
     setPagination((prev) => ({ ...prev, current: 1 }));
@@ -201,7 +204,7 @@ function ShopPage() {
       [filterType]: appliedFilters[filterType].filter((v) => v !== value),
     };
     setAppliedFilters(newFilters);
-    setTempFilters(newFilters); 
+    setTempFilters(newFilters);
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -486,41 +489,45 @@ function ShopPage() {
                 {products.map((product) => (
                   <div
                     key={product.id}
-                    className="group cursor-pointer"
+                    className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200"
                     onClick={() =>
                       (window.location.href = `/product/${product.slug}`)
                     }
                   >
-                    <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3">
+                    <div className="aspect-square bg-gray-100 overflow-hidden">
                       <img
                         src={product.images[0]}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
-                    <h3 className="font-bold text-lg mb-2">{product.name}</h3>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Rate disabled defaultValue={5} className="text-sm" />
-                      <span className="text-sm text-gray-600">5/5</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xl">
-                        {formatNumber(product.price)}
-                      </span>
-                      {product.compare_price && (
-                        <>
-                          <span className="text-gray-400 line-through">
-                            {formatNumber(product.compare_price)}
-                          </span>
-                          <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">
-                            {calculateDiscount(
-                              product.compare_price,
-                              product.price
-                            )}
-                          </span>
-                        </>
-                      )}
-                      <ShoppingCart className="ms-auto" />
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg mb-2 text-gray-800 line-clamp-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Rate disabled defaultValue={5} className="text-sm" />
+                        <span className="text-sm text-gray-600">5/5</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xl text-gray-900">
+                          {formatNumber(product.price)}
+                        </span>
+                        {product.compare_price && (
+                          <>
+                            <span className="text-gray-400 line-through text-sm">
+                              {formatNumber(product.compare_price)}
+                            </span>
+                            <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-medium">
+                              {calculateDiscount(
+                                product.compare_price,
+                                product.price
+                              )}
+                            </span>
+                          </>
+                        )}
+                        <ShoppingCart className="ms-auto text-gray-700 group-hover:text-black transition-colors" />
+                      </div>
                     </div>
                   </div>
                 ))}

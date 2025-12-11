@@ -13,7 +13,7 @@ const getProducts = async (current = 1, pageSize = 9) => {
         pageSize: pageSize,
       }
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     handleErrorResponse(error);
     throw error;
@@ -93,7 +93,7 @@ const filtersProduct = async (current = 1, pageSize = 9, filters = {}) => {
         ...filters
       }
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     handleErrorResponse(error);
     throw error;
@@ -203,6 +203,38 @@ const getDressStyles = async () => {
   }
 };
 
+// 🔥 Lấy sản phẩm bán chạy nhất
+const getBestsellerProducts = async (limit = 4) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/bestseller`, {
+      params: {
+        limit: limit
+      }
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    console.error("Lỗi khi lấy sản phẩm bestseller:", error);
+    throw error;
+  }
+};
+
+// ✨ Lấy sản phẩm mới nhất
+const getNewProducts = async (limit = 10) => {
+  try {
+    const response = await axiosInstance.get(`${API_URL}/new`, {
+      params: {
+        limit: limit
+      }
+    });
+    return response.data;
+  } catch (error) {
+    handleErrorResponse(error);
+    console.error("Lỗi khi lấy sản phẩm mới:", error);
+    throw error;
+  }
+};
+
 const ProductService = {
   getProducts,
   getProductById,
@@ -214,7 +246,9 @@ const ProductService = {
   updateProduct,
   deleteProduct,
   getCategories,
-  getDressStyles
+  getDressStyles,
+  getBestsellerProducts,
+  getNewProducts
 };
 
 export default ProductService;

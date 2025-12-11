@@ -195,7 +195,7 @@ const Header = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link to={'/'} className="text-4xl font-extrabold cursor-pointer text-black">SHOP.CO</Link>
           
-          <nav className="hidden md:flex space-x-6 text-sm">
+          <nav className="hidden md:flex space-x-6 text-md">
             <NavLink to={'/shop'} className={({ isActive }) => isActive ? "text-gray-900 font-semibold" : "hover:text-gray-600"}>
               Shop
             </NavLink>
