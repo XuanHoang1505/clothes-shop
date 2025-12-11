@@ -1,101 +1,64 @@
 import { Star, Check, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
-
 import ProductService from "@/services/site/ProductService";
 import HeroImage from "@/assets/site/images/hero_image.jpg";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
-  const [products, setProducts] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
+  const [topSelling, setTopSelling] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await ProductService.getProducts();
-      setProducts(response);
-    } catch (error) {
-      console.error("Lỗi khi lấy sản phẩm:", error);
-    }
-  };
+  const navigate = useNavigate();
 
+  // Fetch data từ API
   useEffect(() => {
-    fetchProducts();
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Gọi song song các API
+        const [newProductsRes, topSellingRes] = await Promise.all([
+          ProductService.getNewProducts(4),
+          ProductService.getBestsellerProducts(4),
+        ]);
+
+        setNewArrivals(newProductsRes.data || []);
+        setTopSelling(topSellingRes.data || []);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const brands = ["VERSACE", "ZARA", "GUCCI", "PRADA", "Calvin Klein"];
-
-  const newArrivals = [
-    {
-      name: "T-shirt with Tape Details",
-      price: 120,
-      rating: 4.5,
-      reviews: 45,
-      image: "bg-gray-100",
-    },
-    {
-      name: "Skinny Fit Jeans",
-      price: 240,
-      oldPrice: 260,
-      discount: 20,
-      rating: 3.5,
-      reviews: 32,
-      image: "bg-gray-100",
-    },
-    {
-      name: "Checkered Shirt",
-      price: 180,
-      rating: 4.5,
-      reviews: 40,
-      image: "bg-gray-100",
-    },
-    {
-      name: "Sleeve Striped T-shirt",
-      price: 130,
-      oldPrice: 160,
-      discount: 30,
-      rating: 4.5,
-      reviews: 45,
-      image: "bg-gray-100",
-    },
-  ];
-
-  const topSelling = [
-    {
-      name: "Vertical Striped Shirt",
-      price: 212,
-      oldPrice: 232,
-      discount: 20,
-      rating: 5.0,
-      reviews: 60,
-      image: "bg-gray-100",
-    },
-    {
-      name: "Courage Graphic T-shirt",
-      price: 145,
-      rating: 4.0,
-      reviews: 40,
-      image: "bg-gray-100",
-    },
-    {
-      name: "Loose Fit Bermuda Shorts",
-      price: 80,
-      rating: 3.0,
-      reviews: 30,
-      image: "bg-gray-100",
-    },
-    {
-      name: "Faded Skinny Jeans",
-      price: 210,
-      rating: 4.5,
-      reviews: 46,
-      image: "bg-gray-100",
-    },
-  ];
-
   const dressStyles = [
-    { name: "Casual", image: "bg-gray-100" },
-    { name: "Formal", image: "bg-gray-100" },
-    { name: "Party", image: "bg-gray-100" },
-    { name: "Gym", image: "bg-gray-100" },
+    {
+      name: "Casual",
+      image:
+        "https://res.cloudinary.com/did9xvglm/image/upload/v1765456212/casual_ejlkjc.jpg",
+    },
+    {
+      name: "Formal",
+      image:
+        "https://res.cloudinary.com/did9xvglm/image/upload/v1765456412/formal_t1uiki.jpg",
+    },
+    {
+      name: "Party",
+      image:
+        "https://res.cloudinary.com/did9xvglm/image/upload/v1765456412/party_vpdpmx.jpg",
+    },
+    {
+      name: "Gym",
+      image:
+        "https://res.cloudinary.com/did9xvglm/image/upload/v1765456412/gym_wrj1fo.png",
+    },
   ];
+
+  const brands = ["VERSACE", "ZARA", "GUCCI", "PRADA", "Calvin Klein"];
 
   const testimonials = [
     {
@@ -130,10 +93,71 @@ function Home() {
     ));
   };
 
+  // Component hiển thị product card
+  const ProductCard = ({ product }) => (
+    <div
+      className="group bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 border border-gray-200"
+      onClick={() => navigate(`/product/${product.slug}`)}
+    >
+      <div className="relative h-64 overflow-hidden bg-gray-100">
+        <img
+          src={product.images[0]}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.target.src = "https://via.placeholder.com/300x400?text=No+Image";
+          }}
+        />
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold mb-2 line-clamp-2 text-gray-800">
+          {product.name}
+        </h3>
+        <div className="flex items-center mb-2">
+          <div className="flex">{renderStars(product.rating || 4.5)}</div>
+          <span className="text-sm text-gray-600 ml-2">
+            {product.rating || 4.5}/5
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-lg">{product.price}đ</span>
+          {product.compare_price && (
+            <>
+              <span className="text-gray-400 line-through text-sm">
+                {product.compare_price}đ
+              </span>
+              <span className="text-red-500 text-xs bg-red-100 px-2 py-1 rounded-full font-medium">
+                -
+                {Math.round(
+                  ((product.compare_price - product.price) /
+                    product.compare_price) *
+                    100
+                )}
+                %
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Loading skeleton
+  const LoadingSkeleton = () => (
+    <div className="animate-pulse bg-white rounded-xl overflow-hidden shadow">
+      <div className="bg-gray-200 h-72"></div>
+      <div className="p-4">
+        <div className="h-5 bg-gray-200 rounded w-3/4 mb-3"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+        <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section style={{background:"#F2F0F1"}}>
+      <section style={{ background: "#F2F0F1" }}>
         <div className="max-w-7xl mx-auto px-4 py-8 grid md:grid-cols-2 gap-8 items-center">
           <div>
             <h1 className="text-5xl font-bold mb-4">
@@ -166,13 +190,13 @@ function Home() {
               </div>
             </div>
           </div>
-          <img src={HeroImage} alt="Hero" className="w-full rounded-lg"/>
+          <img src={HeroImage} alt="Hero" className="w-full rounded-lg" />
         </div>
       </section>
 
       {/* Brands */}
       <section className="bg-black py-8">
-        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center flex-wrap gap-8 fl">
+        <div className="max-w-7xl mx-auto px-4 flex justify-between items-center flex-wrap gap-8">
           {brands.map((brand, i) => (
             <div key={i} className="text-white text-2xl font-bold">
               {brand}
@@ -185,38 +209,26 @@ function Home() {
       <section className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-4xl font-bold text-center mb-12">NEW ARRIVALS</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {newArrivals.map((item, i) => (
-            <div key={i} className="group">
-              <div
-                className={`${item.image} h-64 rounded-lg mb-4 flex items-center justify-center`}
-              >
-                <div className="text-gray-400">Product Image</div>
-              </div>
-              <h3 className="font-semibold mb-2">{item.name}</h3>
-              <div className="flex items-center mb-2">
-                <div className="flex">{renderStars(item.rating)}</div>
-                <span className="text-sm text-gray-600 ml-2">
-                  {item.rating}/5
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold">${item.price}</span>
-                {item.oldPrice && (
-                  <>
-                    <span className="text-gray-400 line-through">
-                      ${item.oldPrice}
-                    </span>
-                    <span className="text-red-500 text-sm bg-red-100 px-2 py-1 rounded-full">
-                      -{item.discount}%
-                    </span>
-                  </>
-                )}
-              </div>
+          {loading ? (
+            // Hiển thị skeleton loading
+            [...Array(4)].map((_, i) => <LoadingSkeleton key={i} />)
+          ) : newArrivals.length > 0 ? (
+            // Hiển thị sản phẩm từ API
+            newArrivals.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            // Thông báo không có sản phẩm
+            <div className="col-span-4 text-center py-8 text-gray-500">
+              Không có sản phẩm mới
             </div>
-          ))}
+          )}
         </div>
         <div className="text-center mt-8">
-          <button className="border border-gray-300 px-8 py-3 rounded-full hover:bg-gray-50">
+          <button
+            className="border border-gray-300 px-8 py-3 rounded-full hover:bg-gray-50 cursor-pointer"
+            onClick={() => navigate("/shop")}
+          >
             View All
           </button>
         </div>
@@ -226,38 +238,26 @@ function Home() {
       <section className="max-w-7xl mx-auto px-4 py-8">
         <h2 className="text-4xl font-bold text-center mb-12">TOP SELLING</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {topSelling.map((item, i) => (
-            <div key={i} className="group">
-              <div
-                className={`${item.image} h-64 rounded-lg mb-4 flex items-center justify-center`}
-              >
-                <div className="text-gray-400">Product Image</div>
-              </div>
-              <h3 className="font-semibold mb-2">{item.name}</h3>
-              <div className="flex items-center mb-2">
-                <div className="flex">{renderStars(item.rating)}</div>
-                <span className="text-sm text-gray-600 ml-2">
-                  {item.rating}/5
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold">${item.price}</span>
-                {item.oldPrice && (
-                  <>
-                    <span className="text-gray-400 line-through">
-                      ${item.oldPrice}
-                    </span>
-                    <span className="text-red-500 text-sm bg-red-100 px-2 py-1 rounded-full">
-                      -{item.discount}%
-                    </span>
-                  </>
-                )}
-              </div>
+          {loading ? (
+            // Hiển thị skeleton loading
+            [...Array(4)].map((_, i) => <LoadingSkeleton key={i} />)
+          ) : topSelling.length > 0 ? (
+            // Hiển thị sản phẩm từ API
+            topSelling.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            // Thông báo không có sản phẩm
+            <div className="col-span-4 text-center py-8 text-gray-500">
+              Không có sản phẩm bán chạy
             </div>
-          ))}
+          )}
         </div>
         <div className="text-center mt-8">
-          <button className="border border-gray-300 px-8 py-3 rounded-full hover:bg-gray-50">
+          <button
+            className="border border-gray-300 px-8 py-3 rounded-full hover:bg-gray-50 cursor-pointer"
+            onClick={() => navigate("/shop")}
+          >
             View All
           </button>
         </div>
@@ -265,7 +265,7 @@ function Home() {
 
       {/* Browse by Dress Style */}
       <section className="max-w-7xl mx-auto px-4 py-16">
-        <div className="bg-gray-50 rounded-3xl p-12">
+        <div className="bg-gray-200 rounded-3xl p-12">
           <h2 className="text-4xl font-bold text-center mb-12">
             BROWSE BY DRESS STYLE
           </h2>
@@ -273,9 +273,18 @@ function Home() {
             {dressStyles.map((style, i) => (
               <div
                 key={i}
-                className={`${style.image} rounded-2xl p-8 h-64 flex items-start justify-between cursor-pointer hover:shadow-lg transition`}
+                className="relative rounded-2xl h-64 overflow-hidden cursor-pointer hover:shadow-lg transition group"
+                onClick={() => navigate("/shop")}
               >
-                <span className="text-2xl font-bold">{style.name}</span>
+                <img
+                  src={style.image}
+                  alt={style.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <span className="absolute top-8 left-8 text-2xl font-bold text-white drop-shadow-lg">
+                  {style.name}
+                </span>
               </div>
             ))}
           </div>

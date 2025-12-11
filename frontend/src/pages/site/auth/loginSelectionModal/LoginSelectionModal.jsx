@@ -107,7 +107,7 @@ const LoginSelectionModal = ({
               className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium text-gray-700"
             >
               <LockOutlined className="text-lg" />
-              <span>Đăng nhập bằng Tài khoản Football-News</span>
+              <span>Đăng nhập bằng Tài khoản Clothes Shop</span>
             </button>
 
             {/* Google Login Button */}

@@ -112,19 +112,26 @@ class ProductRepository implements ProductRepositoryInterface
             ->get();
     }
 
-    public function getNew(int $limit = 10)
+    public function getNew(int $limit = 4)
     {
-        return Product::where('is_new', true)
-            ->where('is_active', true)
+        // Sắp xếp theo created_at mới nhất
+        return Product::where('is_active', true)
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
     }
 
-    public function getBestseller(int $limit = 10)
+    public function getBestseller(int $limit = 4)
     {
-        return Product::where('is_bestseller', true)
-            ->where('is_active', true)
+        // Lấy sản phẩm featured hoặc sản phẩm có giá compare_price cao
+        // (sản phẩm giảm giá thường bán chạy)
+        return Product::where('is_active', true)
+            ->where(function($query) {
+                $query->where('is_featured', true)
+                    ->orWhereNotNull('compare_price');
+            })
+            ->orderBy('is_featured', 'desc')
+            ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
     }

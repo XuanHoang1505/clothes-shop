@@ -85,7 +85,7 @@ class ProductController extends Controller
 
     public function newProducts(Request $request)
     {
-        $limit = $request->input('limit', 10);
+        $limit = $request->input('limit', 4);
         
         $result = $this->productService->getNewProducts($limit);
         
@@ -95,7 +95,7 @@ class ProductController extends Controller
 
     public function bestseller(Request $request)
     {
-        $limit = $request->input('limit', 10);
+        $limit = $request->input('limit', 4);
         
         $result = $this->productService->getBestsellerProducts($limit);
         
