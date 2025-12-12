@@ -53,6 +53,7 @@ class ProductResource extends JsonResource
             
             // Variants (Array)
             'variants' => $this->variants ?? [],
+            'dressStyle' => $this->dressStyle ?? null,
             'available_sizes' => $this->getAvailableSizes(),
             'available_colors' => $this->getAvailableColors(),
             

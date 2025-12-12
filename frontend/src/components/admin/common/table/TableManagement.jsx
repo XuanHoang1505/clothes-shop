@@ -38,7 +38,6 @@ const TableManagement = ({
   onReject,
   onApprove,
   onEditProduct = () => {},
-
 }) => {
   const [visibleColumns, setVisibleColumns] = useState(
     defaultColumns.map((col) => col.key)
@@ -111,6 +110,21 @@ const TableManagement = ({
             }
           >
             {statusText[item.status] || "Không xác định"}
+          </span>
+        );
+      }
+      case "is_active": {
+        const isActive = item.is_active;
+
+        return (
+          <span
+            className={
+              isActive
+                ? "px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800"
+                : "px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800"
+            }
+          >
+            {isActive ? "Hiển thị" : "Ẩn"}
           </span>
         );
       }
@@ -222,8 +236,8 @@ const TableManagement = ({
           ? 1
           : -1
         : compareA < compareB
-          ? 1
-          : -1;
+        ? 1
+        : -1;
     }
     return 0;
   });
@@ -404,18 +418,18 @@ const TableManagement = ({
         footer={
           !statusFunction?.isViewDetail
             ? [
-              <Button key="cancel" onClick={handleCloseModal}>
-                Đóng
-              </Button>,
-              <Button
-                key="submit"
-                type="primary"
-                loading={isLoading}
-                onClick={handleSubmit}
-              >
-                Lưu
-              </Button>,
-            ]
+                <Button key="cancel" onClick={handleCloseModal}>
+                  Đóng
+                </Button>,
+                <Button
+                  key="submit"
+                  type="primary"
+                  loading={isLoading}
+                  onClick={handleSubmit}
+                >
+                  Lưu
+                </Button>,
+              ]
             : null
         }
         width={800}

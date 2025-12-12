@@ -12,7 +12,7 @@ function WriteComment({ productSlug: propSlug }) {
     const [reviews, setReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
 
-    const productSlug = propSlug || routeSlug;
+    const productSlug = propSlug || '';
 
     const faqs = [
         {
@@ -53,7 +53,7 @@ function WriteComment({ productSlug: propSlug }) {
             try {
                 setLoading(true);
                 const data = await ProductService.getProductBySlug(productSlug);
-                setProduct(data);
+                setProduct(data.data);
                 setError(null);
             } catch (err) {
                 setError('Không thể tải thông tin sản phẩm');
@@ -175,6 +175,8 @@ function WriteComment({ productSlug: propSlug }) {
             </div>
         );
     }
+    console.log(product);
+    
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8">
