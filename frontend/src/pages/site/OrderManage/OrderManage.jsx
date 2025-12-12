@@ -17,7 +17,9 @@ function OrderManagement() {
     const [showProductModal, setShowProductModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
-
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [orderToUpdate, setOrderToUpdate] = useState(null);
+    const [updatedItems, setUpdatedItems] = useState([]);
 
 
     const navigate = useNavigate();
@@ -204,6 +206,53 @@ function OrderManagement() {
             console.error('Error fetching product:', error);
             alert('Có lỗi xảy ra khi tải thông tin sản phẩm. Vui lòng thử lại.');
         }
+    };
+
+
+    const handleUpdateOrder = (order) => {
+        setOrderToUpdate(order);
+        setUpdatedItems(order.items.map(item => ({
+            ...item,
+            newQuantity: item.quantity
+        })));
+        setShowUpdateModal(true);
+    };
+
+    const handleQuantityChange = (index, newQuantity) => {
+        const quantity = Math.max(1, parseInt(newQuantity) || 1);
+        setUpdatedItems(prev => prev.map((item, i) =>
+            i === index ? { ...item, newQuantity: quantity } : item
+        ));
+    };
+
+    const handleConfirmUpdate = async () => {
+        // Ở đây bạn có thể gọi API để cập nhật đơn hàng
+        console.log('Updated items:', updatedItems);
+
+        // Cập nhật state orders
+        setOrders(orders.map(order =>
+            order.id === orderToUpdate.id
+                ? {
+                    ...order,
+                    items: updatedItems.map(item => ({
+                        ...item,
+                        quantity: item.newQuantity
+                    })),
+                    subtotal: updatedItems.reduce((sum, item) =>
+                        sum + (item.price * item.newQuantity), 0
+                    ),
+                    payment: {
+                        ...order.payment,
+                        amount: updatedItems.reduce((sum, item) =>
+                            sum + (item.price * item.newQuantity), 0
+                        ) + order.deliveryFee - order.discount
+                    }
+                }
+                : order
+        ));
+
+        setShowUpdateModal(false);
+        setOrderToUpdate(null);
     };
 
     return (
@@ -435,7 +484,7 @@ function OrderManagement() {
                                             {order.status === 'pending' && (
                                                 <>
                                                     <button
-                                                        onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                                                        onClick={() => handleUpdateOrder(order)}
                                                         className="flex-1 bg-orange-200 text-orange-900 py-3 rounded-lg font-medium hover:bg-orange-300 transition-colors"
                                                     >
                                                         Cập nhật đơn hàng
@@ -578,6 +627,112 @@ function OrderManagement() {
                             </label>
                         );
                     })}
+                </div>
+            </Modal>
+
+            {/* Update Order Modal */}
+            <Modal
+                title={
+                    <div>
+                        <h3 className="text-xl font-bold">Cập nhật số lượng sản phẩm</h3>
+                        <p className="text-sm text-gray-600 mt-1">Đơn hàng: {orderToUpdate?.orderCode || '—'}</p>
+                    </div>
+                }
+                open={showUpdateModal}
+                onCancel={() => {
+                    setShowUpdateModal(false);
+                    setOrderToUpdate(null);
+                }}
+                footer={[
+                    <button
+                        key="cancel"
+                        onClick={() => {
+                            setShowUpdateModal(false);
+                            setOrderToUpdate(null);
+                        }}
+                        className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors mr-3"
+                    >
+                        Hủy
+                    </button>,
+                    <button
+                        key="submit"
+                        onClick={handleConfirmUpdate}
+                        className="px-6 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                    >
+                        Xác nhận cập nhật
+                    </button>
+                ]}
+                width={700}
+                centered
+            >
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                    {updatedItems.map((item, index) => (
+                        <div key={index} className="flex items-center p-3 border rounded-lg">
+                            {/* Product Image */}
+                            <div className="w-20 h-20 bg-gray-200 rounded-md overflow-hidden mr-4 flex-shrink-0">
+                                {item.image ? (
+                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">No image</div>
+                                )}
+                            </div>
+
+                            {/* Product Info */}
+                            <div className="flex-1">
+                                <h5 className="font-medium text-lg">{item.name || 'Sản phẩm'}</h5>
+                                <p className="text-sm text-gray-600 mt-1">
+                                    {item.size && `Size: ${item.size}`}
+                                    {item.color && ` • ${item.color}`}
+                                </p>
+                                <p className="text-sm font-semibold text-orange-600 mt-1">
+                                    {formatNumber(item.price)} đ
+                                </p>
+                            </div>
+
+                            {/* Quantity Input */}
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleQuantityChange(index, item.newQuantity - 1)}
+                                    className="w-8 h-8 border rounded-md hover:bg-gray-100 flex items-center justify-center font-bold"
+                                >
+                                    -
+                                </button>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={item.newQuantity}
+                                    onChange={(e) => handleQuantityChange(index, e.target.value)}
+                                    className="w-16 text-center border rounded-md py-1 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                />
+                                <button
+                                    onClick={() => handleQuantityChange(index, item.newQuantity + 1)}
+                                    className="w-8 h-8 border rounded-md hover:bg-gray-100 flex items-center justify-center font-bold"
+                                >
+                                    +
+                                </button>
+                            </div>
+
+                            {/* Subtotal */}
+                            <div className="ml-4 text-right min-w-[100px]">
+                                <p className="text-sm text-gray-600">Tổng</p>
+                                <p className="font-bold text-orange-600">
+                                    {formatNumber(item.price * item.newQuantity)} đ
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Total Summary */}
+                    <div className="border-t pt-4 mt-4">
+                        <div className="flex justify-between text-lg font-bold">
+                            <span>Tổng cộng:</span>
+                            <span className="text-orange-600">
+                                {formatNumber(updatedItems.reduce((sum, item) =>
+                                    sum + (item.price * item.newQuantity), 0
+                                ))} đ
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </Modal>
 
