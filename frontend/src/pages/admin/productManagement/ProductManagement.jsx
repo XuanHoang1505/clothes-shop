@@ -18,11 +18,9 @@ const ProductManagement = () => {
     { key: "name", label: "Name" },
     { key: "slug", label: "Slug" },
     { key: "description", label: "Description" },
-    // { key: "brand", label: "Brand" },
-    // { key: "category", label: "Category" },
     { key: "price", label: "Price" },
     { key: "stock", label: "Count In Stock" },
-    { key: "status", label: "Trạng thái" },
+    { key: "is_active", label: "Trạng thái" },
   ];
 
   const keysToRemove = ["slug", "id", "category", "description"];
@@ -42,7 +40,15 @@ const ProductManagement = () => {
     setLoadingPage(true);
     try {
       const data = await ProductService.getProducts();
-      setProductData(data || []);
+      const formatData = (data.data || []).map((item) => ({
+        ...item,
+        stock:
+          item.variants?.reduce(
+            (total, v) => total + (Number(v.stock) || 0),
+            0
+          ) ?? 0,
+      }));
+      setProductData(formatData);
     } catch (error) {
       setErrorServer(
         error.message || "An error occurred while fetching products."
@@ -66,7 +72,7 @@ const ProductManagement = () => {
 
   const handleCreateProduct = () => {
     navigate("/admin/product/create");
-  }
+  };
 
   const handleViewDetail = (slug) => {
     navigate(`/admin/product/${slug}`, {
@@ -109,7 +115,7 @@ const ProductManagement = () => {
             onEditProduct={handleEdit}
             onDelete={handleDelete}
             onViewDetailProduct={handleViewDetail}
-            onCreateProduct={handleCreateProduct} 
+            onCreateProduct={handleCreateProduct}
             buttonCustom={buttons}
             isLoading={isLoading}
           />
