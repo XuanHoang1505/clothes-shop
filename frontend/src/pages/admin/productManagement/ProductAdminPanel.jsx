@@ -48,7 +48,7 @@ const ProductAdminPanel = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [product, setProduct] = useState(null);
   const [activeTab, setActiveTab] = useState("basic");
-  
+
   // Tách riêng ảnh cũ và ảnh mới
   const [existingImages, setExistingImages] = useState([]); // Array of URLs
   const [newImageFiles, setNewImageFiles] = useState([]); // Array of File objects
@@ -61,7 +61,7 @@ const ProductAdminPanel = () => {
   // Cleanup preview URLs when component unmounts
   useEffect(() => {
     return () => {
-      newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
     };
   }, []);
 
@@ -196,7 +196,7 @@ const ProductAdminPanel = () => {
       onOk: () => {
         // Revoke preview URL to free memory
         URL.revokeObjectURL(newImagePreviews[index]);
-        
+
         setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
         setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
         setIsDirty(true);
@@ -221,6 +221,9 @@ const ProductAdminPanel = () => {
 
     try {
       setSaving(true);
+      console.log("=== DEBUG: Data being sent ===");
+      console.log("Product name:", product.name);
+      console.log("Product slug:", product.slug);                                                                                                                                 
 
       // Tạo FormData
       const formData = new FormData();
@@ -234,7 +237,7 @@ const ProductAdminPanel = () => {
       formData.append("material", product.material || "");
       formData.append("care_instructions", product.care_instructions || "");
       formData.append("is_featured", product.is_featured);
-      formData.append("is_active", product.is_active);
+      formData.append("is_active", product.is_active);                                                                                                                                  
 
       // Thêm nested objects dạng JSON
       formData.append("category", JSON.stringify(product.category || {}));
@@ -254,18 +257,17 @@ const ProductAdminPanel = () => {
 
       // Gửi request
       await ProductService.updateProduct(product.id, formData);
-      
+
       toast.success("Lưu sản phẩm thành công!");
       setIsDirty(false);
-      
+
       // Cleanup và refresh
-      newImagePreviews.forEach(url => URL.revokeObjectURL(url));
+      newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
       setNewImageFiles([]);
       setNewImagePreviews([]);
-      
+
       // Fetch lại data để cập nhật ảnh mới
       await fetchProductData();
-
     } catch (error) {
       console.error("Save error:", error);
       message.error(error.response?.data?.message || "Có lỗi khi lưu sản phẩm");
@@ -661,7 +663,8 @@ const ProductAdminPanel = () => {
           <div className="mb-4 flex justify-between items-center">
             <Title level={4}>Hình ảnh sản phẩm</Title>
             <Text type="secondary">
-              {existingImages.length} ảnh hiện tại • {newImageFiles.length} ảnh mới
+              {existingImages.length} ảnh hiện tại • {newImageFiles.length} ảnh
+              mới
             </Text>
           </div>
 
@@ -702,10 +705,10 @@ const ProductAdminPanel = () => {
                     </Button>,
                   ]}
                 >
-                  <Card.Meta 
+                  <Card.Meta
                     description={
                       <Tag color="blue">Ảnh hiện tại #{index + 1}</Tag>
-                    } 
+                    }
                   />
                 </Card>
               </Col>
@@ -737,10 +740,8 @@ const ProductAdminPanel = () => {
                     </Button>,
                   ]}
                 >
-                  <Card.Meta 
-                    description={
-                      <Tag color="green">Ảnh mới #{index + 1}</Tag>
-                    } 
+                  <Card.Meta
+                    description={<Tag color="green">Ảnh mới #{index + 1}</Tag>}
                   />
                 </Card>
               </Col>
@@ -754,13 +755,14 @@ const ProductAdminPanel = () => {
                 beforeUpload={() => false}
                 onChange={handleImageUpload}
               >
-                <Card hoverable className="h-full flex items-center justify-center">
+                <Card
+                  hoverable
+                  className="h-full flex items-center justify-center"
+                >
                   <div className="flex flex-col items-center justify-center h-48 cursor-pointer">
                     <PlusOutlined className="text-3xl mb-2 text-gray-400" />
                     <div className="text-gray-500">Thêm ảnh mới</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      Tối đa 5MB
-                    </div>
+                    <div className="text-xs text-gray-400 mt-1">Tối đa 5MB</div>
                   </div>
                 </Card>
               </Upload>

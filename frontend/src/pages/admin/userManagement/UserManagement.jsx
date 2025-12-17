@@ -14,6 +14,7 @@ import TableManagement from "@/components/admin/common/table/TableManagement";
 import UserService from "@/services/admin/UserService";
 import Page500 from "@/pages/page500/Page500";
 import defaultAvatar from "@/assets/site/images/avatar-default-lg.png";
+import { toast } from "react-toastify";
 
 const { Option } = Select;
 
@@ -215,7 +216,7 @@ const UserManagement = () => {
         );
 
         setUserData(updatedUsers);
-        message.success("Cập nhật thành công!");
+        toast.success("Cập nhật thành công!");
       } else if (statusFunction.isAdd) {
         const cleanString = (value) => (value?.trim() === "" ? null : value);
 

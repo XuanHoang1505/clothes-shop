@@ -171,7 +171,7 @@ class ProductRepository implements ProductRepositoryInterface
         return Product::create($data);
     }
 
-    public function update(string $id, array $data)
+    public function update(string $id, array $data): Product|bool
     {
         $product = Product::find($id);
         
@@ -179,7 +179,14 @@ class ProductRepository implements ProductRepositoryInterface
             return false;
         }
 
-        return $product->update($data);
+        // Update the product
+        $product->update($data);
+        
+        // Refresh to get the latest data from database
+        $product->refresh();
+        
+        // Return the updated product instance
+        return $product;
     }
 
     public function delete(string $id)

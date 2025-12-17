@@ -24,7 +24,7 @@ class UpdateUserRequest extends BaseRequest
 
             'role' => 'sometimes|nullable|in:ADMIN,USER',
 
-            'avatar' => 'sometimes|file|mimes:jpg,jpeg,png|max:2048',
+            'avatar' => 'sometimes|nullable|file|mimes:jpg,jpeg,png|max:2048',
         ];
     }
 
